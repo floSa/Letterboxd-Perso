@@ -1,0 +1,22 @@
+# Configuration locale et secrets TMDb (ne jamais commiter)
+config.json
+
+# Environnements virtuels Python
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Sauvegardes et temporaires
+*.bak
+*.db-wal
+*.db-shm
+
+# IDE & Système
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
