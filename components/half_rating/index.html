@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    user-select: none;
+    overflow: hidden;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    width: 100%;
+  }
+  .rating-container {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 2px;
+    height: 32px;
+    width: 100%;
+  }
+  .star-box {
+    position: relative;
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .star-svg {
+    width: 20px;
+    height: 20px;
+    display: block;
+    pointer-events: none;
+  }
+  .half-click {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 50%;
+    z-index: 2;
+  }
+  .half-click.left {
+    left: 0;
+  }
+  .half-click.right {
+    right: 0;
+  }
+  .rating-value {
+    font-size: 12px;
+    font-weight: 700;
+    color: #e2e8f0;
+    margin-left: 6px;
+    min-width: 32px;
+    text-align: right;
+  }
+  .btn-reset {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    font-size: 11px;
+    cursor: pointer;
+    padding: 0 3px;
+    margin-left: 2px;
+  }
+  .btn-reset:hover {
+    color: #ef4444;
+  }
+</style>
+</head>
+<body>
+<div class="rating-container" id="container">
+  <!-- Stars injected here -->
+</div>
+
+<script>
+  let currentVal = 0.0;
+  let hoverVal = null;
+  let mode = "star"; // "star" or "heart"
+
+  function getStarSvg(fillPercent, isHeart) {
+    const id = "grad_" + Math.random().toString(36).substr(2, 9);
+    const color = isHeart ? "#ef4444" : "#f59e0b";
+    const bg = "#334155";
+    
+    const grad = `
+      <defs>
+        <linearGradient id="${id}">
+          <stop offset="${fillPercent}%" stop-color="${color}"/>
+          <stop offset="${fillPercent}%" stop-color="${bg}"/>
+        </linearGradient>
+      </defs>`;
+
+    if (isHeart) {
+      return `
+        <svg class="star-svg" viewBox="0 0 24 24">
+          ${grad}
+          <path fill="url(#${id})" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>`;
+    } else {
+      return `
+        <svg class="star-svg" viewBox="0 0 24 24">
+          ${grad}
+          <path fill="url(#${id})" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+        </svg>`;
+    }
+  }
+
+  function render() {
+    const container = document.getElementById("container");
+    container.innerHTML = "";
+    const activeVal = (hoverVal !== null) ? hoverVal : currentVal;
+    const isHeart = (mode === "heart");
+
+    for (let i = 1; i <= 5; i++) {
+      let fill = 0;
+      if (activeVal >= i) {
+        fill = 100;
+      } else if (activeVal >= (i - 0.5)) {
+        fill = 50;
+      }
+
+      const box = document.createElement("div");
+      box.className = "star-box";
+      box.innerHTML = getStarSvg(fill, isHeart);
+
+      // Left half (i - 0.5)
+      const left = document.createElement("div");
+      left.className = "half-click left";
+      left.title = (i - 0.5) + " / 5";
+      left.onmouseenter = () => { hoverVal = i - 0.5; render(); };
+      left.onmouseleave = () => { hoverVal = null; render(); };
+      left.onclick = () => { selectValue(i - 0.5); };
+
+      // Right half (i)
+      const right = document.createElement("div");
+      right.className = "half-click right";
+      right.title = i + " / 5";
+      right.onmouseenter = () => { hoverVal = i; render(); };
+      right.onmouseleave = () => { hoverVal = null; render(); };
+      right.onclick = () => { selectValue(i); };
+
+      box.appendChild(left);
+      box.appendChild(right);
+      container.appendChild(box);
+    }
+
+    // Label
+    const valLabel = document.createElement("span");
+    valLabel.className = "rating-value";
+    valLabel.innerText = activeVal > 0 ? (activeVal + "/5") : "-";
+    container.appendChild(valLabel);
+
+    // Reset button
+    if (currentVal > 0) {
+      const resetBtn = document.createElement("button");
+      resetBtn.className = "btn-reset";
+      resetBtn.innerText = "✕";
+      resetBtn.title = "Effacer la note (0)";
+      resetBtn.onclick = () => { selectValue(0.0); };
+      container.appendChild(resetBtn);
+    }
+  }
+
+  function selectValue(val) {
+    currentVal = val;
+    hoverVal = null;
+    render();
+    sendValue(val);
+  }
+
+  function sendValue(val) {
+    window.parent.postMessage({
+      isStreamlitMessage: true,
+      type: "streamlit:setComponentValue",
+      value: val
+    }, "*");
+  }
+
+  // Communication avec Streamlit
+  window.addEventListener("message", function(event) {
+    if (event.data.type === "streamlit:render") {
+      const args = event.data.args || {};
+      if (args.value !== undefined) {
+        currentVal = parseFloat(args.value) || 0.0;
+      }
+      if (args.mode !== undefined) {
+        mode = args.mode;
+      }
+      render();
+      window.parent.postMessage({
+        isStreamlitMessage: true,
+        type: "streamlit:setFrameHeight",
+        height: 32
+      }, "*");
+    }
+  });
+
+  window.parent.postMessage({
+    isStreamlitMessage: true,
+    type: "streamlit:componentReady",
+    apiVersion: 1
+  }, "*");
+
+  render();
+</script>
+</body>
+</html>
