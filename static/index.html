@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CinéTriage • Mon Letterboxd Personnel</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎬</text></svg>">
+</head>
+<body>
+
+  <!-- BARRE SUPÉRIEURE (HEADER LETTERBOXD) -->
+  <header class="top-header">
+    <div class="header-left">
+      <div class="brand">
+        <span class="brand-icon">🎬</span>
+        <span class="brand-name">CinéTriage</span>
+      </div>
+      <nav class="main-nav">
+        <button class="nav-tab active" data-tab="triage">Sorties Cinéma</button>
+        <button class="nav-tab" data-tab="watchlist">Ma Sélection <span id="badge-watchlist" class="nav-count">0</span></button>
+        <button class="nav-tab" data-tab="watched">Films Vus <span id="badge-watched" class="nav-count">0</span></button>
+        <button class="nav-tab" data-tab="obsidian">Export Obsidian</button>
+      </nav>
+    </div>
+
+    <div class="header-right">
+      <div class="stat-pill" title="Total des sorties répertoriées">
+        <span class="stat-label">Total :</span>
+        <span id="stat-total" class="stat-val">-</span>
+      </div>
+      <div class="stat-pill" title="Total des films vus et notés">
+        <span class="stat-label">Vus :</span>
+        <span id="stat-watched" class="stat-val highlight">-</span>
+      </div>
+      <button id="btn-sync" class="btn-sync" title="Vérifier et synchroniser les sorties avec TMDb">
+        <span class="sync-icon">🔄</span> Synchroniser
+      </button>
+    </div>
+  </header>
+
+  <!-- BANDEAU DE SYNCHRONISATION EN COURS -->
+  <div id="sync-banner" class="sync-banner hidden">
+    <div class="sync-info">
+      <span class="sync-spinner">⏳</span>
+      <span id="sync-text">Synchronisation en cours...</span>
+    </div>
+    <div class="sync-prog-track">
+      <div id="sync-prog-bar" class="sync-prog-fill"></div>
+    </div>
+  </div>
+
+  <!-- CONTENU PRINCIPAL -->
+  <main class="app-container">
+
+    <!-- ======================================================== -->
+    <!-- ONGLET 1 : SORTIES CINÉMA (TRIAGE SEMAINE / MOIS / ANNÉE) -->
+    <!-- ======================================================== -->
+    <section id="tab-content-triage" class="tab-pane active">
+
+      <!-- BARRE DE NAVIGATION & CONTRÔLES PLACÉE AU-DESSUS DES FILMS -->
+      <div class="triage-toolbar">
+        <div class="scale-selector">
+          <button class="scale-btn active" data-scale="week">Semaine</button>
+          <button class="scale-btn" data-scale="month">Mois</button>
+          <button class="scale-btn" data-scale="year">Année</button>
+        </div>
+
+        <div class="nav-navigation">
+          <button id="btn-nav-prev" class="btn-nav" title="Période précédente">◀ Précédent</button>
+          <h2 id="period-title" class="period-title">Chargement...</h2>
+          <button id="btn-nav-next" class="btn-nav" title="Période suivante">Suivant ▶</button>
+        </div>
+
+        <div class="date-controls">
+          <button id="btn-today" class="btn-today">Aujourd'hui</button>
+          <input type="date" id="nav-date-input" class="nav-date-input" title="Choisir une date cible">
+        </div>
+      </div>
+
+      <!-- SOUS-TITRE / INFOS NOMBRE DE FILMS & FILTRES RAPIDES ANTI-BRUIT -->
+      <div class="sub-info-bar">
+        <div class="sub-info-left">
+          <span id="period-movie-count" class="movie-count-text"></span>
+          <button id="btn-toggle-cinema" class="btn-filter active" title="Afficher uniquement les vrais longs-métrages cinéma (masque les courts-métrages < 50 min, émissions TV et entrées sans affiche)">
+            🎬 Cinéma uniquement
+          </button>
+          <button id="btn-toggle-reprises" class="btn-filter" title="Masquer les reprises (ressorties et films du patrimoine) pour ne voir que les nouveautés">
+            🔄 Masquer les reprises
+          </button>
+          <button id="btn-clean-noise" class="btn-clean-noise" title="Éliminer d'un coup (supprimer) tous les courts-métrages, entrées sans affiche et bruit de cette période">
+            🧹 Éliminer le bruit
+          </button>
+        </div>
+
+        <div class="sub-info-right">
+          <div class="sort-control">
+            <label for="triage-sort">Trier par :</label>
+            <select id="triage-sort" class="custom-select-small">
+              <option value="tmdb_desc">★ Note TMDb (décroissante)</option>
+              <option value="date_desc">📅 Date de sortie</option>
+              <option value="title_asc">🔤 Titre (A-Z)</option>
+            </select>
+          </div>
+
+          <div id="year-pagination" class="year-pagination hidden">
+            <button id="btn-page-prev" class="btn-page">◀ Page préc.</button>
+            <span id="page-indicator">Page 1 / 1</span>
+            <button id="btn-page-next" class="btn-page">Page suiv. ▶</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTENEUR DES FILMS (LISTE SEMAINE OU GRILLES) -->
+      <div id="movies-container" class="movies-container">
+        <!-- Rendu dynamique en JavaScript -->
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- ONGLET 2 : MA SÉLECTION (À VOIR) -->
+    <!-- ======================================================== -->
+    <section id="tab-content-watchlist" class="tab-pane hidden">
+      <div class="watchlist-header">
+        <div>
+          <h2>🎯 Ma Sélection de Films à Voir</h2>
+          <p class="section-desc">Films conservés non vus, triés par priorité d'envie (cœurs).</p>
+        </div>
+        <div class="filter-bar">
+          <div class="filter-item">
+            <label>Genre :</label>
+            <select id="wl-genre-filter" class="custom-select">
+              <option value="Tous">Tous</option>
+            </select>
+          </div>
+          <div class="filter-item">
+            <label>Priorité min (❤️) :</label>
+            <select id="wl-min-want" class="custom-select">
+              <option value="1">1.0+</option>
+              <option value="2">2.0+</option>
+              <option value="3">3.0+</option>
+              <option value="4">4.0+</option>
+              <option value="5">5.0</option>
+            </select>
+          </div>
+          <div class="filter-item">
+            <input type="text" id="wl-search" class="search-input" placeholder="🔍 Titre, réalisateur...">
+          </div>
+        </div>
+      </div>
+      <div id="watchlist-container" class="watchlist-container">
+        <!-- Rendu dynamique -->
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- ONGLET 3 : FILMS VUS & TOPS -->
+    <!-- ======================================================== -->
+    <section id="tab-content-watched" class="tab-pane hidden">
+      <div class="watched-header">
+        <div>
+          <h2>⭐ Mes Films Vus & Historique</h2>
+          <p class="section-desc">Tous vos films visionnés classés par note ou date.</p>
+        </div>
+        <div class="filter-bar">
+          <div class="filter-item">
+            <label>Trier par :</label>
+            <select id="watched-sort" class="custom-select">
+              <option value="rating_desc">Meilleures notes d'abord</option>
+              <option value="date_desc">Sorties les plus récentes</option>
+              <option value="title_asc">Titre alphabétique</option>
+            </select>
+          </div>
+          <div class="filter-item">
+            <label>Année :</label>
+            <input type="number" id="watched-year" class="custom-input-num" placeholder="Toutes" min="2000" max="2030">
+          </div>
+          <div class="filter-item">
+            <label>Genre :</label>
+            <select id="watched-genre" class="custom-select">
+              <option value="Tous">Tous</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div id="watched-container" class="watched-container">
+        <!-- Rendu dynamique -->
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- ONGLET 4 : EXPORT OBSIDIAN -->
+    <!-- ======================================================== -->
+    <section id="tab-content-obsidian" class="tab-pane hidden">
+      <div class="obsidian-box">
+        <h2>📝 Export vers Obsidian (Vault local)</h2>
+        <p class="section-desc">Générez des fiches de films en Markdown riche avec YAML frontmatter, affiches et note d'index Dataview.</p>
+        
+        <div class="form-group">
+          <label for="obsidian-path">Dossier de destination de votre coffre Obsidian :</label>
+          <input type="text" id="obsidian-path" class="custom-input-text" placeholder="C:\Users\...\MonVault\Cinema\Films" value="C:\Users\flori\Documents\Obsidian\Films">
+        </div>
+
+        <div class="obsidian-actions">
+          <button id="btn-export-watchlist" class="btn-obsidian">Exporter ma Watchlist (À Voir)</button>
+          <button id="btn-export-watched" class="btn-obsidian">Exporter mes Films Vus</button>
+          <button id="btn-export-all" class="btn-obsidian primary">Tout Exporter</button>
+        </div>
+
+        <div id="obsidian-result" class="obsidian-result hidden"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- TOAST DE NOTIFICATION / ANNULATION RAPIDE -->
+  <div id="toast" class="toast hidden">
+    <span id="toast-message">Film éliminé</span>
+    <button id="toast-undo" class="toast-undo">Annuler</button>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
