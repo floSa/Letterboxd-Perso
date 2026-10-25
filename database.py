@@ -5,7 +5,7 @@ from datetime import datetime
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cinetrack.db")
 
 def get_connection():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=30.0)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -13,6 +13,8 @@ def init_db():
     """Initialise le schéma de la base de données si nécessaire."""
     with get_connection() as conn:
         cursor = conn.cursor()
+        cursor.execute("PRAGMA journal_mode = WAL;")
+        cursor.execute("PRAGMA synchronous = NORMAL;")
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS movies (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -120,6 +122,48 @@ def insert_or_update_movie(movie: dict):
                 original_release_date=CASE WHEN excluded.original_release_date != '' THEN excluded.original_release_date ELSE movies.original_release_date END,
                 updated_at=CURRENT_TIMESTAMP
         """, m)
+        conn.commit()
+
+def insert_or_update_movies_batch(movies: list[dict]):
+    """Insère ou met à jour en lot (transaction unique) une liste de films sans écraser le statut utilisateur."""
+    if not movies:
+        return
+    cleaned = []
+    for movie in movies:
+        m = dict(movie)
+        m.setdefault("is_reprise", 0)
+        m.setdefault("original_year", 0)
+        m.setdefault("original_release_date", "")
+        cleaned.append(m)
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.executemany("""
+            INSERT INTO movies (
+                tmdb_id, title, original_title, release_date, year, 
+                week_start_date, director, genres, synopsis, poster_url, 
+                runtime, vote_average, is_reprise, original_year, original_release_date
+            ) VALUES (
+                :tmdb_id, :title, :original_title, :release_date, :year, 
+                :week_start_date, :director, :genres, :synopsis, :poster_url, 
+                :runtime, :vote_average, :is_reprise, :original_year, :original_release_date
+            )
+            ON CONFLICT(tmdb_id) DO UPDATE SET
+                title=excluded.title,
+                original_title=excluded.original_title,
+                release_date=excluded.release_date,
+                year=excluded.year,
+                week_start_date=excluded.week_start_date,
+                director=COALESCE(excluded.director, movies.director),
+                genres=COALESCE(excluded.genres, movies.genres),
+                synopsis=COALESCE(excluded.synopsis, movies.synopsis),
+                poster_url=COALESCE(excluded.poster_url, movies.poster_url),
+                runtime=CASE WHEN excluded.runtime > 0 THEN excluded.runtime ELSE movies.runtime END,
+                vote_average=excluded.vote_average,
+                is_reprise=CASE WHEN excluded.is_reprise = 1 THEN 1 ELSE movies.is_reprise END,
+                original_year=CASE WHEN excluded.original_year > 0 THEN excluded.original_year ELSE movies.original_year END,
+                original_release_date=CASE WHEN excluded.original_release_date != '' THEN excluded.original_release_date ELSE movies.original_release_date END,
+                updated_at=CURRENT_TIMESTAMP
+        """, cleaned)
         conn.commit()
 
 def get_available_years():

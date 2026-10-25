@@ -354,8 +354,7 @@ class CineTriageHandler(SimpleHTTPRequestHandler):
                         sync_state["message"] = f"Mise à jour {cur_y} ({c}/{t})..."
 
                     movies = tmdb.fetch_french_releases_for_year(cur_y, api_key, progress_callback=cb_cur)
-                    for m in movies:
-                        db.insert_or_update_movie(m)
+                    db.insert_or_update_movies_batch(movies)
 
                     missing, _ = db.get_missing_years(2000, cur_y)
                     if missing:
@@ -366,8 +365,7 @@ class CineTriageHandler(SimpleHTTPRequestHandler):
                                 sync_state["progress"] = base + int((c / max(1, t)) * (65 // len(batch)))
                                 sync_state["message"] = f"Importation {y} ({cnt} films)..."
                             m_y = tmdb.fetch_french_releases_for_year(y, api_key, progress_callback=cb_m)
-                            for m in m_y:
-                                db.insert_or_update_movie(m)
+                            db.insert_or_update_movies_batch(m_y)
 
                     sync_state["progress"] = 100
                     sync_state["message"] = "Synchronisation terminée avec succès !"

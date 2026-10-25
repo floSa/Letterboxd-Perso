@@ -19,8 +19,7 @@ def sync_year(year: int, api_key: str):
 
     try:
         movies = tmdb.fetch_french_releases_for_year(year, api_key, progress_callback=on_progress)
-        for m in movies:
-            db.insert_or_update_movie(m)
+        db.insert_or_update_movies_batch(movies)
         print(f"\n  -> Succes pour {year} : {len(movies)} films integres en base.")
         return len(movies)
     except Exception as e:
@@ -38,6 +37,8 @@ def main():
     if not api_key:
         print("Erreur : Aucune cle TMDb configuree dans config.json.")
         sys.exit(1)
+
+    db.init_db()
 
     years_to_sync = []
     if args.all:

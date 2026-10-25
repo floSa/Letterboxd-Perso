@@ -2,6 +2,7 @@ import requests
 import json
 import os
 import calendar
+import concurrent.futures
 from datetime import datetime, timedelta
 
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
@@ -140,37 +141,36 @@ def fetch_movie_director_and_runtime(movie_id: int, api_key: str, movie_year: in
 def fetch_french_releases_for_year(year: int, api_key: str, progress_callback=None):
     """
     Interroge l'API TMDb pour récupérer toutes les sorties cinéma en France pour une année.
-    Effectue les requêtes mois par mois (1 à 12) pour éviter le plafonnement artificiel de pagination
-    et garantir une couverture complète de janvier à décembre.
+    Effectue les requêtes mois par mois (1 à 12) en parallèle (max 4 workers) avec une session persistante
+    pour une vitesse optimale (~5s par an) et une couverture exhaustive de janvier à décembre.
     """
     if not api_key:
         raise ValueError("Clé ou Jeton API TMDb requis.")
 
     base_url = "https://api.themoviedb.org/3/discover/movie"
     auth_params, headers = _build_auth(api_key)
-    all_movies = []
-    seen_ids = set()
+    session = requests.Session()
 
-    for month in range(1, 13):
+    def fetch_single_month(month: int):
         last_day = calendar.monthrange(year, month)[1]
         start_date = f"{year}-{month:02d}-01"
         end_date = f"{year}-{month:02d}-{last_day:02d}"
-
+        month_movies = []
         page = 1
         total_pages = 1
-        while page <= total_pages and page <= 20: # Sécurité ~400 films/mois
+        while page <= total_pages and page <= 15:
             params = {
                 **auth_params,
                 "region": "FR",
                 "language": "fr-FR",
                 "release_date.gte": start_date,
                 "release_date.lte": end_date,
-                "with_release_type": "2|3", # 2: Limited Theatrical, 3: Theatrical
+                "with_release_type": "2|3",
                 "sort_by": "release_date.asc",
                 "page": page
             }
             try:
-                resp = requests.get(base_url, params=params, headers=headers, timeout=15)
+                resp = session.get(base_url, params=params, headers=headers, timeout=12)
                 if resp.status_code != 200:
                     break
                 data = resp.json()
@@ -181,40 +181,34 @@ def fetch_french_releases_for_year(year: int, api_key: str, progress_callback=No
             results = data.get("results", [])
 
             for item in results:
-                tmdb_id = item.get("id")
-                if not tmdb_id or tmdb_id in seen_ids:
-                    continue
-                seen_ids.add(tmdb_id)
-
-                release_date = item.get("release_date")
-                if not release_date:
+                rel_date = item.get("release_date")
+                if not rel_date:
                     continue
 
-                wednesday = get_wednesday_of_date(release_date)
+                wednesday = get_wednesday_of_date(rel_date)
                 genre_names = [TMDB_GENRES.get(gid, "") for gid in item.get("genre_ids", []) if gid in TMDB_GENRES]
                 genres_str = ", ".join(filter(None, genre_names))
 
                 poster_path = item.get("poster_path")
                 poster_url = f"https://image.tmdb.org/t/p/w342{poster_path}" if poster_path else ""
 
-                # Détection de reprise sur l'année de sortie originelle
                 is_reprise = 0
                 orig_year = 0
-                orig_date = release_date
-                if release_date and len(release_date) >= 4:
+                orig_date = rel_date
+                if rel_date and len(rel_date) >= 4:
                     try:
-                        rd_year = int(release_date[:4])
+                        rd_year = int(rel_date[:4])
                         if (year - rd_year) >= 2:
                             is_reprise = 1
                             orig_year = rd_year
                     except Exception:
                         pass
 
-                movie_obj = {
-                    "tmdb_id": tmdb_id,
+                month_movies.append({
+                    "tmdb_id": item["id"],
                     "title": item.get("title") or item.get("original_title", "Sans titre"),
                     "original_title": item.get("original_title", ""),
-                    "release_date": release_date,
+                    "release_date": rel_date,
                     "year": year,
                     "week_start_date": wednesday,
                     "director": "Inconnu",
@@ -227,14 +221,27 @@ def fetch_french_releases_for_year(year: int, api_key: str, progress_callback=No
                     "is_reprise": is_reprise,
                     "original_year": orig_year,
                     "original_release_date": orig_date
-                }
-                all_movies.append(movie_obj)
-
+                })
             page += 1
+        return month, month_movies
 
-        if progress_callback:
-            progress_callback(month, 12, len(all_movies))
+    all_movies = []
+    seen_ids = set()
+    completed_months = 0
 
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        future_to_month = {executor.submit(fetch_single_month, m): m for m in range(1, 13)}
+        for future in concurrent.futures.as_completed(future_to_month):
+            m, m_movies = future.result()
+            completed_months += 1
+            for movie in m_movies:
+                if movie["tmdb_id"] not in seen_ids:
+                    seen_ids.add(movie["tmdb_id"])
+                    all_movies.append(movie)
+            if progress_callback:
+                progress_callback(completed_months, 12, len(all_movies))
+
+    all_movies.sort(key=lambda x: x.get("release_date") or "")
     return all_movies
 
 def fetch_movies_for_date_range(start_date: str, end_date: str, api_key: str):
