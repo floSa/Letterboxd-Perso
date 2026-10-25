@@ -265,6 +265,11 @@ class CineTriageHandler(SimpleHTTPRequestHandler):
             self.path = "/index.html"
             return super().do_GET()
 
+        # Alias pour /static/... vers la racine de static
+        elif path.startswith("/static/"):
+            self.path = path[7:]
+            return super().do_GET()
+
         # Fichiers statiques
         return super().do_GET()
 

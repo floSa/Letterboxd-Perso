@@ -97,7 +97,7 @@ def _format_movie_row(row) -> dict:
         filename = p_url.split("/")[-1]
         local_path = os.path.join(POSTERS_DIR, filename)
         if os.path.isfile(local_path):
-            d["poster_url"] = f"/static/posters/{filename}"
+            d["poster_url"] = f"/posters/{filename}"
         else:
             d["poster_url"] = f"https://image.tmdb.org/t/p/w342/{filename}"
     return d
