@@ -90,7 +90,7 @@ def init_db():
 POSTERS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "posters")
 
 def _format_movie_row(row) -> dict:
-    """Formate une ligne de film en résolvant le poster en local ou en w185."""
+    """Formate une ligne de film en résolvant le poster en local ou en w342."""
     d = dict(row)
     p_url = d.get("poster_url")
     if p_url and "image.tmdb.org" in p_url:
@@ -99,7 +99,7 @@ def _format_movie_row(row) -> dict:
         if os.path.isfile(local_path):
             d["poster_url"] = f"/static/posters/{filename}"
         else:
-            d["poster_url"] = f"https://image.tmdb.org/t/p/w185/{filename}"
+            d["poster_url"] = f"https://image.tmdb.org/t/p/w342/{filename}"
     return d
 
 def insert_or_update_movie(movie: dict):

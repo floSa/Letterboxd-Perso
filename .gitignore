@@ -16,6 +16,7 @@ __pycache__/
 
 # Cache local des affiches (hors-ligne)
 static/posters/
+*.zip
 
 # IDE & Système
 .vscode/

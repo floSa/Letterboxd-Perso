@@ -16,7 +16,7 @@ if sys.platform == "win32":
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cinetrack.db")
 POSTERS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "posters")
 
-def download_single_poster(item, size="w185"):
+def download_single_poster(item, size="w342"):
     tmdb_id, title, poster_url = item
     if not poster_url or "image.tmdb.org" not in poster_url:
         return False, "no_url"
@@ -27,7 +27,7 @@ def download_single_poster(item, size="w185"):
     if os.path.isfile(dest_path) and os.path.getsize(dest_path) > 500:
         return True, "already_exists"
 
-    # URL avec la taille demandee (ex: w185)
+    # URL avec la taille demandee (ex: w342)
     download_url = f"https://image.tmdb.org/t/p/{size}/{filename}"
     try:
         resp = requests.get(download_url, timeout=10)
@@ -45,7 +45,7 @@ def main():
     parser.add_argument("--all", action="store_true", help="Telecharger toutes les affiches de la base (2000 a 2026)")
     parser.add_argument("--recent", action="store_true", help="Telecharger les annees recentes (2024 a 2026)")
     parser.add_argument("--test", action="store_true", help="Telecharger un echantillon de test (100 affiches)")
-    parser.add_argument("--size", default="w185", choices=["w92", "w185", "w342", "w500"], help="Resolution des affiches (defaut: w185)")
+    parser.add_argument("--size", default="w342", choices=["w92", "w185", "w342", "w500"], help="Resolution des affiches (defaut: w342)")
     parser.add_argument("--workers", type=int, default=10, help="Nombre de threads simultanes (defaut: 10)")
     args = parser.parse_args()
 
