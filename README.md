@@ -1,86 +1,165 @@
-# 🎬 Letterboxd-Perso
+# Letterboxd-Perso
 
-> **Application web personnelle de tri, notation et archivage cinématographique ultra-réactive.**  
-> Connectée directement à l'API **The Movie Database (TMDb)** et intégrée à **Obsidian**.
+**Application web locale de tri, notation fine et archivage cinématographique, connectée à TMDb et exportable vers Obsidian.**
 
----
-
-## ✨ Points forts & Fonctionnalités
-
-- ⚡ **Performance instantanée (0 ms de latence)** : Architecture légère en Python natif (`server.py`) combinée à une Single Page Application Vanilla JS optimisée.
-- 🎯 **Tri et filtrage intelligent anti-bruit** :
-  - **Filtre Cinéma uniquement** : Élimine automatiquement les courts-métrages (< 50 min), les émissions TV et les entrées factices TMDb (dumps du 31 décembre sans note).
-  - **Gestion dédiée des reprises (ressorties en salle)** : Détecte les ressorties de classiques et de films de patrimoine (écart $\ge 2$ ans avec la sortie mondiale), les isole en bas de liste et permet de les masquer en un clic (`🔄 Masquer les reprises`).
-  - **Bouton 1-clic « 🧹 Éliminer le bruit »** : Permet de rejeter en masse les éléments parasites d'une période donnée.
-- ⭐ **Système de notation précis par demi-étoiles & demi-cœurs** :
-  - Évaluation de 0 à 5 (par pas de 0.5) pour la note de visionnage (étoiles dorées) et la priorité d'envie (cœurs rouges).
-  - Rendu vectoriel strict sans décalage de mise en page (*zero layout shift*).
-- 📅 **Navigation temporelle multi-échelles** :
-  - **Vue Semaine** : Rangées horizontales détaillées avec réalisateur, acteurs principaux, note TMDb, durée et affiches haute qualité au ratio vertical 2:3.
-  - **Vue Mois** : Grille élégante par carrés hebdomadaires avec liseré fin.
-  - **Vue Année** : Mosaïque dense avec pagination rapide.
-  - Préchargement asynchrone des périodes adjacentes pour une navigation immédiate.
-- 🔗 **Liens directs TMDb** : Clic direct sur n'importe quelle affiche ou titre pour ouvrir la fiche détaillée sur The Movie Database dans un nouvel onglet.
-- 📝 **Intégration Obsidian** : Exportation directe de vos films vus et de votre sélection vers votre coffre Markdown personnel (fiches formatées avec métadonnées YAML).
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-3-003B57?logo=sqlite&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?logo=javascript&logoColor=black)
+![TMDb](https://img.shields.io/badge/TMDb_API-v3%2Fv4-01B4E4?logo=themoviedatabase&logoColor=white)
 
 ---
 
-## 🚀 Démarrage rapide
+## Architecture
 
-### 1. Prérequis
-- Python 3.10+ (idéalement 3.12)
-- Une clé API gratuite ou un jeton de lecture TMDb v4 (à récupérer sur [themoviedb.org](https://www.themoviedb.org/settings/api)).
+Letterboxd-Perso fonctionne selon une architecture légère client-serveur en local. Le backend Python (`server.py`) expose une API REST ultra-rapide connectée à une base de données relationnelle locale SQLite (`cinetrack.db`). Le frontend est une application à page unique (Single Page Application) en Vanilla JavaScript et CSS, garantissant un affichage réactif à zéro latence avec barres d'outils fixes au défilement.
 
-### 2. Installation
+```mermaid
+flowchart LR
+  subgraph Navigateur["Frontend (Client Web)"]
+    ui[Interface SPA index.html]
+    engine[Moteur reactif app.js]
+    ui --> engine
+  end
+
+  subgraph Serveur["Backend Local"]
+    srv[Serveur HTTP server.py :8080]
+    db[Gestionnaire database.py]
+    tmdb[Client tmdb_client.py]
+    obs[Exportateur obsidian_export.py]
+    srv --> db
+    srv --> tmdb
+    srv --> obs
+  end
+
+  subgraph Persistance["Stockage Local"]
+    sqlite[(Base SQLite cinetrack.db)]
+    db --> sqlite
+  end
+
+  engine -->|Requetes REST JSON| srv
+  tmdb -->|Metadonnees et affiches| api[API The Movie Database]
+  obs -->|Fiches Markdown| vault[Coffre Obsidian]
+```
+
+> Détails complets des composants et flux : [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+
+---
+
+## Documentation
+
+L'ensemble de la documentation technique et fonctionnelle est centralisé dans le dossier `docs/` :
+
+| Document | Contenu |
+|---|---|
+| [docs/CADRAGE.md](docs/CADRAGE.md) | Objectifs, périmètre V1, hypothèses et décisions produit (POURQUOI) |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Composants, flux Mermaid, schéma SQLite, sécurité et décisions techniques (COMMENT) |
+
+---
+
+## Démarrage
+
+### Prérequis
+- Python 3.10 ou supérieur (recommandé : 3.12)
+- Une clé d'API personnelle The Movie Database (gratuite sur themoviedb.org)
+
+### Installation
 ```bash
 git clone git@github.com-perso:floSa/Letterboxd-Perso.git
 cd Letterboxd-Perso
 
-# Création de l'environnement virtuel
+# Creation de l'environnement virtuel
 python -m venv .venv
-.\.venv\Scripts\activate  # Sous Windows (ou source .venv/bin/activate sous Linux/macOS)
+.\.venv\Scripts\activate  # Sous Windows (source .venv/bin/activate sous Linux/macOS)
 
-# Installation des dépendances
+# Installation des dependances minimales
 pip install -r requirements.txt
 ```
 
-### 3. Configuration de la clé TMDb
-Copiez `config.example.json` vers `config.json` et renseignez votre clé :
+### Configuration
+Copier le fichier d'exemple et renseigner votre clé TMDb :
+```bash
+cp config.example.json config.json
+```
+
+Éditer `config.json` :
 ```json
 {
   "tmdb_api_key": "VOTRE_CLE_OU_JETON_TMDB"
 }
 ```
 
-### 4. Lancement
-- **Sous Windows** : Double-cliquez simplement sur `lancer_app.bat` (démarre le serveur et ouvre votre navigateur à l'adresse `http://localhost:8080`).
-- **En ligne de commande** :
+### Lancement
+- **Sous Windows** : double-cliquer sur `lancer_app.bat` ou lancer la commande suivante :
 ```bash
 python server.py
 ```
+- L'application est immédiatement accessible à l'adresse suivante : `http://localhost:8080`.
 
 ---
 
-## 🗂️ Structure du projet
+## Configuration
 
-```
+| Paramètre | Fichier | Valeur par défaut | Rôle |
+|---|---|---|---|
+| `tmdb_api_key` | `config.json` | `""` | Jeton ou clé API v3/v4 pour interroger TMDb |
+| `port` | `server.py` | `8080` | Port d'écoute du serveur HTTP local |
+| `db_path` | `database.py` | `cinetrack.db` | Chemin du fichier de base de données relationnelle SQLite |
+| `obsidian_vault_path` | `index.html` / UI | `C:\Users\flori\Documents\Obsidian\Films` | Dossier par défaut pour l'export des fiches Markdown |
+
+---
+
+## API et Endpoints
+
+| Méthode | Route | Rôle |
+|---|---|---|
+| `GET` | `/api/movies?week_date=YYYY-MM-DD` | Liste des sorties d'une semaine (mercredi au mardi) avec tri des reprises |
+| `GET` | `/api/movies-month?year=YYYY&month=MM` | Sorties du mois découpées par blocs hebdomadaires |
+| `GET` | `/api/movies-year?year=YYYY&page=N` | Grille des films de l'année avec pagination |
+| `GET` | `/api/stats` | Compteurs globaux (films répertoriés, vus, conservés, rejetés) |
+| `GET` | `/api/watchlist` | Films de la sélection avec filtres (genre, envie min, possession, dates) |
+| `GET` | `/api/watched` | Historique des films vus avec filtres et options de tri |
+| `GET` | `/api/sync-status` | Progression de la tâche de synchronisation en arrière-plan |
+| `POST` | `/api/rate` | Enregistrement d'une note de visionnage ou de priorité d'envie |
+| `POST` | `/api/owned` | Bascule de l'état possédé en bibliothèque (0 ou 1) |
+| `POST` | `/api/dismiss` | Élimination d'un film des listes de découverte |
+| `POST` | `/api/restore` | Restauration d'un film précédemment rejeté |
+| `POST` | `/api/clean-noise` | Élimination en masse des films sans affiche, courts ou factices |
+| `POST` | `/api/sync` | Lancement de la synchronisation des sorties avec TMDb |
+| `POST` | `/api/export-obsidian` | Génération des fiches Markdown et de l'index Dataview |
+
+---
+
+## Structure du projet
+
+```text
 Letterboxd-Perso/
-├── server.py              # Serveur HTTP haute performance multi-threadé & API REST
-├── database.py            # Modèle SQLite, indexation, filtres anti-bruit et reprises
-├── tmdb_client.py         # Client TMDb (découverte, crédits, détection ressorties)
-├── obsidian_export.py     # Module d'exportation vers coffres Obsidian (Markdown)
-├── cinetrack.db           # Base SQLite locale (8 000+ films répertoriés & notes)
-├── config.json            # Configuration locale (clé TMDb - ignorée par Git)
-├── config.example.json    # Modèle de configuration
-├── requirements.txt       # Dépendances Python minimales (requests)
-├── lancer_app.bat         # Lanceur 1-clic pour Windows
-└── static/                # Frontend Web Vanilla JS / CSS (Thème sombre Letterboxd)
-    ├── index.html         # Structure SPA
-    ├── style.css          # Design system et composants vectoriels
-    └── app.js             # Logique applicative réactive, cache et préchargement
+├── docs/
+│   ├── CADRAGE.md             # Cadrage fonctionnel, perimetre et decisions produit
+│   └── ARCHITECTURE.md        # Architecture detaillee, flux et persistance
+├── static/
+│   ├── index.html             # Structure SPA (Sorties, Selection, Vus, Obsidian)
+│   ├── style.css              # Design system sombre, composants et filtres fixes
+│   └── app.js                 # Controleur frontend, cache et notation vectorielle
+├── server.py                  # Serveur HTTP standard et routeur d'API REST
+├── database.py                # Modele SQLite, indexation et regles anti-bruit
+├── tmdb_client.py             # Client de decouverte et metadonnees TMDb
+├── obsidian_export.py         # Generateur de notes Markdown avec YAML frontmatter
+├── cinetrack.db               # Base de donnees locale relationnelle SQLite
+├── config.example.json        # Modele de configuration sans secrets
+├── config.json                # Configuration locale avec cle API (ignore par Git)
+├── requirements.txt           # Dependances Python minimales (requests)
+├── lancer_app.bat             # Script de lancement direct sous Windows
+└── README.md                  # Vue d'ensemble du projet
 ```
 
 ---
 
-## 👤 Auteur
-**Florian Horellou** ([@floSa](https://github.com/floSa))
+## Licences et composants
+
+| Composant | Rôle | Licence |
+|---|---|---|
+| Python standard library | Socle applicatif, serveur HTTP, SQLite | Python Software Foundation License |
+| requests | Client HTTP pour l'API TMDb | Apache 2.0 |
+| SQLite 3 | Moteur de base de données relationnelle locale | Public Domain |
+| The Movie Database (TMDb) | Source de données et affiches cinématographiques | TMDb Terms of Use (usage personnel non commercial) |
+| Code de Letterboxd-Perso | Code source du projet | MIT |
