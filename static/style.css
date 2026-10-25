@@ -1062,6 +1062,32 @@ body {
   gap: 8px;
 }
 
+.card-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.card-title-row .card-title {
+  flex: 1;
+}
+
+.badge-vote-yellow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f59e0b;
+  color: #0f172a;
+  font-weight: 800;
+  font-size: 0.72rem;
+  line-height: 1;
+  padding: 3px 5px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  letter-spacing: -0.2px;
+}
+
 .card-title {
   font-size: 0.86rem;
   font-weight: 700;

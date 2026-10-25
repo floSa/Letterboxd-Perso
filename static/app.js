@@ -575,11 +575,18 @@ function createCompactCard(m) {
 
   const content = document.createElement("div");
   content.className = "card-content";
+
+  const voteNum = parseFloat(m.vote_average) || 0.0;
+  const voteBadge = voteNum > 0 ? `<span class="badge-vote-yellow" title="Note TMDb : ${voteNum.toFixed(1)}/10">${voteNum.toFixed(1)}</span>` : "";
+
   content.innerHTML = `
-    <div class="card-title">
-      <a href="https://www.themoviedb.org/movie/${m.tmdb_id}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(m.title)} (Ouvrir sur TMDb)">
-        ${escapeHtml(m.title)}
-      </a>
+    <div class="card-title-row">
+      <div class="card-title">
+        <a href="https://www.themoviedb.org/movie/${m.tmdb_id}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(m.title)} (Ouvrir sur TMDb)">
+          ${escapeHtml(m.title)}
+        </a>
+      </div>
+      ${voteBadge}
     </div>`;
 
   const ratings = document.createElement("div");
