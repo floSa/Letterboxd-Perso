@@ -186,14 +186,16 @@ def get_movies_by_month(year: int, month: int, cinema_only: bool = False, sort_b
         if hide_reprises:
             query += " AND (is_reprise = 0 OR status = 'kept' OR is_watched = 1)"
         
-        if sort_by == "tmdb_desc":
+        if sort_by == "date_asc":
+            query += " ORDER BY is_reprise ASC, release_date ASC, title ASC"
+        elif sort_by == "tmdb_desc":
             query += " ORDER BY is_reprise ASC, vote_average DESC, release_date DESC"
         elif sort_by == "date_desc":
             query += " ORDER BY is_reprise ASC, release_date DESC, vote_average DESC"
         elif sort_by == "title_asc":
             query += " ORDER BY is_reprise ASC, title ASC"
         else:
-            query += " ORDER BY is_reprise ASC, vote_average DESC, release_date DESC"
+            query += " ORDER BY is_reprise ASC, release_date ASC, title ASC"
 
         cursor.execute(query, params)
         return [dict(row) for row in cursor.fetchall()]
@@ -211,14 +213,16 @@ def get_movies_by_year(year: int, cinema_only: bool = False, sort_by: str = "tmd
         if hide_reprises:
             query += " AND (is_reprise = 0 OR status = 'kept' OR is_watched = 1)"
         
-        if sort_by == "tmdb_desc":
+        if sort_by == "date_asc":
+            query += " ORDER BY is_reprise ASC, release_date ASC, title ASC"
+        elif sort_by == "tmdb_desc":
             query += " ORDER BY is_reprise ASC, vote_average DESC, release_date DESC"
         elif sort_by == "date_desc":
             query += " ORDER BY is_reprise ASC, release_date DESC, vote_average DESC"
         elif sort_by == "title_asc":
             query += " ORDER BY is_reprise ASC, title ASC"
         else:
-            query += " ORDER BY is_reprise ASC, vote_average DESC, release_date DESC"
+            query += " ORDER BY is_reprise ASC, release_date ASC, title ASC"
 
         cursor.execute(query, params)
         return [dict(row) for row in cursor.fetchall()]

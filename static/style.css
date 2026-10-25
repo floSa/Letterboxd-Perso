@@ -840,50 +840,141 @@ body {
 }
 
 /* --------------------------------------------------------
-   MODE MOIS : CARRÉ ENGLOBANT PAR SEMAINE AVEC LISERÉ FIN
+   MODE MOIS & ANNÉE : RUBANS COULISSANTS (CARROUSEL 6 FILMS PAR LIGNE)
    -------------------------------------------------------- */
-.month-week-block {
+.month-week-block, .carousel-block {
   border: 1px solid #283442;
   border-radius: 10px;
-  padding: 14px 16px;
-  margin-bottom: 22px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
   background-color: rgba(24, 32, 40, 0.45);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
 }
 
-.month-week-header {
+.month-week-header, .carousel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   padding-bottom: 8px;
   border-bottom: 1px solid rgba(44, 56, 70, 0.4);
 }
 
-.month-week-title {
-  font-size: 0.85rem;
+.carousel-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.month-week-title, .carousel-title {
+  font-size: 0.88rem;
   font-weight: 700;
   color: #8fa0b5;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.month-week-badge {
+.month-week-badge, .carousel-badge {
   font-size: 0.75rem;
   color: var(--text-muted);
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.carousel-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-carousel-nav {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+  user-select: none;
+}
+
+.btn-carousel-nav:hover {
+  background-color: #2f3b47;
+  color: #fff;
+  border-color: var(--border-strong);
+  transform: scale(1.08);
+}
+
+.carousel-track {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 2px 10px 2px;
+}
+
+/* Scrollbar fine et discrète */
+.carousel-track::-webkit-scrollbar {
+  height: 6px;
+}
+
+.carousel-track::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 3px;
+}
+
+.carousel-track::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 3px;
+}
+
+.carousel-track::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* 6 cartes visibles par ligne exactement */
+.carousel-track .card-compact {
+  flex: 0 0 calc((100% - (5 * 12px)) / 6);
+  min-width: 170px;
+  max-width: calc((100% - (5 * 12px)) / 6);
+  scroll-snap-align: start;
+}
+
+@media (max-width: 1200px) {
+  .carousel-track .card-compact {
+    flex: 0 0 calc((100% - (3 * 12px)) / 4);
+    max-width: calc((100% - (3 * 12px)) / 4);
+  }
+}
+
+@media (max-width: 768px) {
+  .carousel-track .card-compact {
+    flex: 0 0 calc((100% - 12px) / 2);
+    max-width: calc((100% - 12px) / 2);
+  }
 }
 
 /* --------------------------------------------------------
-   GRILLES HARMONISÉES (MOIS, ANNÉE, RECHERCHE : STRICTEMENT 6 PAR LIGNE)
+   GRILLE RECHERCHE (6 PAR LIGNE SUR ÉCRAN STANDARD)
    -------------------------------------------------------- */
-.grid-month, .grid-year, .grid-search {
+.grid-search {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
   gap: 12px;
 }
 
 @media (min-width: 1100px) {
-  .grid-month, .grid-year, .grid-search {
+  .grid-search {
     grid-template-columns: repeat(6, 1fr);
   }
 }

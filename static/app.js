@@ -314,7 +314,7 @@ async function renderCurrentView() {
       yearPag.classList.add("hidden");
       renderMonthView(data.weeks, container, countBar);
     } else if (state.scale === "year") {
-      yearPag.classList.remove("hidden");
+      yearPag.classList.add("hidden");
       renderYearView(data, container, countBar);
     }
 
@@ -432,7 +432,76 @@ function renderWeekView(movies, container, countBar) {
   container.appendChild(list);
 }
 
-// 2. VUE MOIS : CARRÉS ENGLOBANTS PAR SEMAINE AVEC LISERÉ FIN ET GRILLE
+// --- BLOC CARROUSEL UNIFIÉ (SEMAINE EN VUE MOIS, MOIS EN VUE ANNÉE) ---
+function createCarouselBlock(titleText, badgeText, movies) {
+  const block = document.createElement("div");
+  block.className = "carousel-block";
+
+  const header = document.createElement("div");
+  header.className = "carousel-header";
+
+  const headerLeft = document.createElement("div");
+  headerLeft.className = "carousel-header-left";
+  headerLeft.innerHTML = `
+    <span class="carousel-title">${escapeHtml(titleText)}</span>
+    <span class="carousel-badge">${badgeText}</span>
+  `;
+
+  const controls = document.createElement("div");
+  controls.className = "carousel-controls";
+
+  const btnPrev = document.createElement("button");
+  btnPrev.className = "btn-carousel-nav btn-prev";
+  btnPrev.title = "Faire défiler vers la gauche";
+  btnPrev.innerHTML = "◀";
+
+  const btnNext = document.createElement("button");
+  btnNext.className = "btn-carousel-nav btn-next";
+  btnNext.title = "Faire défiler vers la droite";
+  btnNext.innerHTML = "▶";
+
+  controls.appendChild(btnPrev);
+  controls.appendChild(btnNext);
+
+  header.appendChild(headerLeft);
+  header.appendChild(controls);
+  block.appendChild(header);
+
+  const track = document.createElement("div");
+  track.className = "carousel-track";
+
+  movies.forEach(m => {
+    const card = createCompactCard(m);
+    track.appendChild(card);
+  });
+
+  // Défilement fluide au clic sur les flèches
+  btnPrev.addEventListener("click", () => {
+    track.scrollBy({ left: -track.clientWidth * 0.85, behavior: "smooth" });
+  });
+  btnNext.addEventListener("click", () => {
+    track.scrollBy({ left: track.clientWidth * 0.85, behavior: "smooth" });
+  });
+
+  // Défilement à la molette verticale transformé en horizontal
+  track.addEventListener("wheel", (e) => {
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+      if (track.scrollWidth > track.clientWidth) {
+        const canScrollLeft = (e.deltaY < 0 && track.scrollLeft > 0);
+        const canScrollRight = (e.deltaY > 0 && track.scrollLeft < track.scrollWidth - track.clientWidth - 1);
+        if (canScrollLeft || canScrollRight) {
+          e.preventDefault();
+          track.scrollLeft += e.deltaY;
+        }
+      }
+    }
+  }, { passive: false });
+
+  block.appendChild(track);
+  return block;
+}
+
+// 2. VUE MOIS : RUBANS PAR SEMAINE (MAX 6 PAR LIGNE, DÉFILEMENT HORIZONTAL)
 function renderMonthView(weeks, container, countBar) {
   if (!weeks || weeks.length === 0) {
     countBar.textContent = "0 film pour ce mois";
@@ -441,59 +510,32 @@ function renderMonthView(weeks, container, countBar) {
   }
 
   let totalM = weeks.reduce((sum, w) => sum + w.movie_count, 0);
-  countBar.textContent = `${totalM} film(s) réparti(s) sur ${weeks.length} semaine(s) :`;
+  countBar.textContent = `${totalM} film(s) réparti(s) sur ${weeks.length} semaine(s) (coulissez avec le pad, la souris ou les flèches) :`;
 
   container.innerHTML = "";
 
   weeks.forEach(w => {
-    const block = document.createElement("div");
-    block.className = "month-week-block";
-
-    const header = document.createElement("div");
-    header.className = "month-week-header";
-    header.innerHTML = `
-      <span class="month-week-title">${escapeHtml(w.label)}</span>
-      <span class="month-week-badge">${w.movie_count} film(s)</span>
-    `;
-    block.appendChild(header);
-
-    const grid = document.createElement("div");
-    grid.className = "grid-month";
-
-    w.movies.forEach(m => {
-      const card = createCompactCard(m);
-      grid.appendChild(card);
-    });
-
-    block.appendChild(grid);
+    const block = createCarouselBlock(w.label, `${w.movie_count} film(s)`, w.movies);
     container.appendChild(block);
   });
 }
 
-// 3. VUE ANNÉE : GRILLE DENSE (5 PAR LIGNE MINIMUM) AVEC PAGINATION RAPIDE
+// 3. VUE ANNÉE : RUBANS PAR MOIS (1 LIGNE PAR MOIS, CLASSÉS PAR DATE DU DÉBUT À LA FIN DU MOIS)
 function renderYearView(data, container, countBar) {
-  countBar.textContent = `${data.total_movies} film(s) en ${data.year} (Page ${data.page} sur ${data.total_pages}) :`;
+  const months = data.months || [];
+  countBar.textContent = `${data.total_movies} film(s) en ${data.year} répartis sur ${months.length} mois (coulissez horizontalement de gauche à droite) :`;
 
-  // Mettre à jour les boutons de pagination
-  document.getElementById("page-indicator").textContent = `Page ${data.page} / ${data.total_pages}`;
-  document.getElementById("btn-page-prev").disabled = (data.page <= 1);
-  document.getElementById("btn-page-next").disabled = (data.page >= data.total_pages);
-
-  if (!data.movies || data.movies.length === 0) {
+  if (!months || months.length === 0) {
     container.innerHTML = '<div style="padding: 30px; text-align: center; color: #94a3b8;">Aucun film répertorié pour cette année.</div>';
     return;
   }
 
-  const grid = document.createElement("div");
-  grid.className = "grid-year";
-
-  data.movies.forEach(m => {
-    const card = createCompactCard(m);
-    grid.appendChild(card);
-  });
-
   container.innerHTML = "";
-  container.appendChild(grid);
+
+  months.forEach(m => {
+    const block = createCarouselBlock(m.label, `${m.movie_count} film(s)`, m.movies);
+    container.appendChild(block);
+  });
 }
 
 // CARTE COMPACTE POUR LES GRILLES MOIS ET ANNÉE (RATIO 2:3, TITRES CLAIRS, CLIC TMDB)

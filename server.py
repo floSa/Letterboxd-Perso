@@ -185,27 +185,30 @@ class CineTriageHandler(SimpleHTTPRequestHandler):
 
             elif scale == "year":
                 year = int(params.get("year", [target_dt.year])[0])
-                page = int(params.get("page", [1])[0])
-                page_size = 40  # 40 films par page pour fluidité totale
+                all_year_movies = db.get_movies_by_year(year, cinema_only=cinema_only, sort_by="date_asc", hide_reprises=hide_reprises)
 
-                all_year_movies = db.get_movies_by_year(year, cinema_only=cinema_only, sort_by=sort_by, hide_reprises=hide_reprises)
-                total_movies = len(all_year_movies)
-                total_pages = max(1, (total_movies + page_size - 1) // page_size)
-                page = max(1, min(page, total_pages))
+                month_names = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
+                months_list = []
 
-                start_idx = (page - 1) * page_size
-                end_idx = start_idx + page_size
-                paged_movies = all_year_movies[start_idx:end_idx]
+                for m_idx in range(1, 13):
+                    m_movies = [
+                        m for m in all_year_movies 
+                        if m.get("release_date") and len(m["release_date"]) >= 7 and int(m["release_date"][5:7]) == m_idx
+                    ]
+                    if m_movies:
+                        months_list.append({
+                            "month_num": m_idx,
+                            "label": f"{month_names[m_idx - 1]} {year}",
+                            "movie_count": len(m_movies),
+                            "movies": m_movies
+                        })
 
                 return self.send_json({
                     "scale": "year",
                     "year": year,
                     "title": f"Année {year}",
-                    "page": page,
-                    "total_pages": total_pages,
-                    "total_movies": total_movies,
-                    "page_size": page_size,
-                    "movies": paged_movies
+                    "total_movies": len(all_year_movies),
+                    "months": months_list
                 })
 
         # 4. API : Watchlist (À Voir)
