@@ -396,11 +396,13 @@ function renderWeekView(movies, container, countBar) {
 
     const starWidget = createRatingWidget(m.tmdb_id, m.user_rating || 0.0, "star");
     const heartWidget = createRatingWidget(m.tmdb_id, m.want_rating || 0.0, "heart");
-    const ownedBtn = createOwnedButton(m.tmdb_id, m.is_owned || 0);
+    const ownedRow = document.createElement("div");
+    ownedRow.className = "card-owned-row";
+    ownedRow.appendChild(createOwnedButton(m.tmdb_id, m.is_owned || 0));
 
     colActions.appendChild(starWidget);
     colActions.appendChild(heartWidget);
-    colActions.appendChild(ownedBtn);
+    colActions.appendChild(ownedRow);
 
     row.appendChild(colDel);
     row.appendChild(colPoster);
@@ -526,12 +528,13 @@ function createCompactCard(m) {
   ratings.className = "card-ratings";
   ratings.appendChild(createRatingWidget(m.tmdb_id, m.user_rating || 0.0, "star"));
   ratings.appendChild(createRatingWidget(m.tmdb_id, m.want_rating || 0.0, "heart"));
-  content.appendChild(ratings);
 
   const ownedRow = document.createElement("div");
   ownedRow.className = "card-owned-row";
   ownedRow.appendChild(createOwnedButton(m.tmdb_id, m.is_owned || 0));
-  content.appendChild(ownedRow);
+  ratings.appendChild(ownedRow);
+
+  content.appendChild(ratings);
 
   card.appendChild(headerBar);
   card.appendChild(posterBox);
@@ -677,18 +680,19 @@ function createRatingWidget(tmdbId, initialVal, mode) {
 // --- BOUTON DE POSSESSION (CIBLE DANS MA BIBLIOTHÈQUE) ---
 function createOwnedButton(tmdbId, initialOwned) {
   const btn = document.createElement("button");
+  btn.type = "button";
   let owned = (initialOwned === 1 || initialOwned === true || initialOwned === "1");
 
   const targetSvg = `
-    <svg class="owned-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <svg class="target-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="12" cy="12" r="10"/>
       <circle cx="12" cy="12" r="5"/>
       <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
     </svg>`;
 
   function updateUi() {
-    btn.className = `btn-owned-toggle ${owned ? "is-owned" : ""}`;
-    btn.innerHTML = `${targetSvg} <span class="owned-label">${owned ? "Possédé" : "Non possédé"}</span>`;
+    btn.className = `btn-owned-target ${owned ? "is-owned" : ""}`;
+    btn.innerHTML = targetSvg;
     btn.title = owned ? "🎯 Possédé dans ma bibliothèque (cliquer pour retirer)" : "🎯 Non possédé (cliquer pour marquer comme possédé)";
   }
 
@@ -900,7 +904,10 @@ async function loadWatchlist() {
       colAct.className = "col-actions";
       colAct.appendChild(createRatingWidget(m.tmdb_id, m.user_rating || 0.0, "star"));
       colAct.appendChild(createRatingWidget(m.tmdb_id, m.want_rating || 0.0, "heart"));
-      colAct.appendChild(createOwnedButton(m.tmdb_id, m.is_owned || 0));
+      const ownedRow = document.createElement("div");
+      ownedRow.className = "card-owned-row";
+      ownedRow.appendChild(createOwnedButton(m.tmdb_id, m.is_owned || 0));
+      colAct.appendChild(ownedRow);
       row.appendChild(colAct);
       list.appendChild(row);
     });
@@ -960,7 +967,10 @@ async function loadWatched() {
       const colAct = document.createElement("div");
       colAct.className = "col-actions";
       colAct.appendChild(createRatingWidget(m.tmdb_id, m.user_rating || 0.0, "star"));
-      colAct.appendChild(createOwnedButton(m.tmdb_id, m.is_owned || 0));
+      const ownedRow = document.createElement("div");
+      ownedRow.className = "card-owned-row";
+      ownedRow.appendChild(createOwnedButton(m.tmdb_id, m.is_owned || 0));
+      colAct.appendChild(ownedRow);
       row.appendChild(colAct);
       list.appendChild(row);
     });

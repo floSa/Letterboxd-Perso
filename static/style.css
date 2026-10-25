@@ -794,47 +794,49 @@ body {
    -------------------------------------------------------- */
 .card-owned-row {
   display: flex;
-  justify-content: flex-end;
-  margin-top: 6px;
+  justify-content: flex-start;
+  align-items: center;
+  width: 172px;
+  height: 22px;
+  margin-top: 2px;
+  padding-left: 2px;
 }
 
-.btn-owned-toggle {
+.btn-owned-target {
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  background-color: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-muted);
-  border-radius: 5px;
-  padding: 3px 8px;
-  font-size: 0.72rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  line-height: 1;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  color: #38bdf8; /* Petite cible bleue pour non possédé */
+  transition: transform 0.15s ease, color 0.15s ease, background-color 0.15s ease;
 }
 
-.btn-owned-toggle:hover {
-  background-color: rgba(255, 255, 255, 0.09);
-  border-color: rgba(255, 255, 255, 0.25);
-  color: var(--text-primary);
+.btn-owned-target:hover {
+  transform: scale(1.2);
+  background-color: rgba(56, 189, 248, 0.15);
 }
 
-.btn-owned-toggle.is-owned {
-  background-color: rgba(16, 185, 129, 0.14);
-  border-color: rgba(16, 185, 129, 0.45);
-  color: #10b981;
+.btn-owned-target.is-owned {
+  color: #10b981; /* Passe en vert quand possédé */
 }
 
-.btn-owned-toggle.is-owned:hover {
-  background-color: rgba(16, 185, 129, 0.22);
-  border-color: #10b981;
+.btn-owned-target.is-owned:hover {
+  transform: scale(1.2);
+  background-color: rgba(16, 185, 129, 0.18);
 }
 
-.owned-icon {
-  width: 13px;
-  height: 13px;
-  flex-shrink: 0;
+.btn-owned-target .target-svg {
+  width: 18px;
+  height: 18px;
+  display: block;
 }
 
 /* --------------------------------------------------------
@@ -1014,6 +1016,24 @@ body {
 /* --------------------------------------------------------
    ONGLETS SECONDAIRES (WATCHLIST, VUS, OBSIDIAN)
    -------------------------------------------------------- */
+.filter-sticky-header {
+  position: sticky;
+  top: 56px;
+  z-index: 80;
+  background-color: var(--bg-primary);
+  padding-top: 10px;
+  padding-bottom: 6px;
+  margin-bottom: 16px;
+}
+
+.filter-bar-panel {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 10px 18px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
 .watchlist-header, .watched-header {
   display: flex;
   align-items: flex-end;

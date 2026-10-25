@@ -123,12 +123,8 @@
     <!-- ONGLET 2 : MA SÉLECTION (À VOIR) -->
     <!-- ======================================================== -->
     <section id="tab-content-watchlist" class="tab-pane hidden">
-      <div class="watchlist-header">
-        <div>
-          <h2>🎯 Ma Sélection de Films à Voir</h2>
-          <p class="section-desc">Films conservés non vus, triés par priorité d'envie (cœurs).</p>
-        </div>
-        <div class="filter-bar">
+      <div class="filter-sticky-header">
+        <div class="filter-bar filter-bar-panel">
           <div class="filter-item">
             <label>Genre :</label>
             <select id="wl-genre-filter" class="custom-select">
@@ -173,12 +169,8 @@
     <!-- ONGLET 3 : FILMS VUS & TOPS -->
     <!-- ======================================================== -->
     <section id="tab-content-watched" class="tab-pane hidden">
-      <div class="watched-header">
-        <div>
-          <h2>⭐ Mes Films Vus & Historique</h2>
-          <p class="section-desc">Tous vos films visionnés classés par note ou date.</p>
-        </div>
-        <div class="filter-bar">
+      <div class="filter-sticky-header">
+        <div class="filter-bar filter-bar-panel">
           <div class="filter-item">
             <label>Trier par :</label>
             <select id="watched-sort" class="custom-select">
@@ -208,11 +200,6 @@
           <div class="filter-item">
             <label>Genre :</label>
             <select id="watched-genre" class="custom-select">
-              <option value="Tous">Tous</option>
-            </select>
-          </div>
-        </div>
-      </div>
               <option value="Tous">Tous</option>
             </select>
           </div>
@@ -254,6 +241,6 @@
     <button id="toast-undo" class="toast-undo">Annuler</button>
   </div>
 
-  <script src="/app.js?v=2.2"></script>
+  <script src="/app.js?v=2.3"></script>
 </body>
 </html>
