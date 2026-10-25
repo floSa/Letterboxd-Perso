@@ -504,3 +504,39 @@ def get_missing_years(start_year: int = 2000, end_year: int = 2026):
         missing = [y for y in range(start_year, end_year + 1) if counts.get(y, 0) < 50]
         missing.sort(reverse=True)
         return missing, counts
+
+def search_movies(query_str: str, sort_by: str = "date_asc", owned: str = None, limit: int = 150) -> list[dict]:
+    """Recherche tous les films en base par titre, titre original ou réalisateur."""
+    if not query_str or not query_str.strip():
+        return []
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        q = f"%{query_str.strip()}%"
+        sql = """
+            SELECT * FROM movies 
+            WHERE (title LIKE ? OR original_title LIKE ? OR director LIKE ?)
+        """
+        params = [q, q, q]
+
+        if owned in ["1", "true", "owned"]:
+            sql += " AND is_owned = 1"
+        elif owned in ["0", "false", "not_owned"]:
+            sql += " AND is_owned = 0"
+        
+        if sort_by == "date_asc":
+            sql += " ORDER BY CASE WHEN release_date IS NULL OR release_date = '' THEN 1 ELSE 0 END, release_date ASC, title ASC"
+        elif sort_by == "date_desc":
+            sql += " ORDER BY release_date DESC, title ASC"
+        elif sort_by == "rating_desc":
+            sql += " ORDER BY user_rating DESC, release_date DESC"
+        elif sort_by == "title_asc":
+            sql += " ORDER BY title ASC"
+        else:
+            sql += " ORDER BY release_date ASC"
+            
+        sql += " LIMIT ?"
+        params.append(limit)
+        
+        cursor.execute(sql, params)
+        return [dict(row) for row in cursor.fetchall()]
+

@@ -37,7 +37,13 @@ function initEventListeners() {
       const targetPane = document.getElementById(`tab-content-${tabId}`);
       if (targetPane) targetPane.classList.remove("hidden");
 
-      if (tabId === "watchlist") loadWatchlist();
+      if (tabId === "search") {
+        const input = document.getElementById("global-search-input");
+        if (input) {
+          input.focus();
+          if (input.value.trim()) performGlobalSearch();
+        }
+      } else if (tabId === "watchlist") loadWatchlist();
       else if (tabId === "watched") loadWatched();
     });
   });
@@ -159,6 +165,16 @@ function initEventListeners() {
   if (btnClean) {
     btnClean.addEventListener("click", cleanCurrentNoise);
   }
+
+  // 15. Filtres Recherche Globale
+  const globalSearchInput = document.getElementById("global-search-input");
+  if (globalSearchInput) {
+    globalSearchInput.addEventListener("input", debounce(performGlobalSearch, 250));
+  }
+  const searchSort = document.getElementById("search-sort");
+  if (searchSort) searchSort.addEventListener("change", performGlobalSearch);
+  const searchOwned = document.getElementById("search-owned-filter");
+  if (searchOwned) searchOwned.addEventListener("change", performGlobalSearch);
 }
 
 function formatDateISO(d) {
@@ -1008,6 +1024,54 @@ async function exportObsidian(type) {
     }
   } catch (e) {
     resBox.textContent = `❌ Erreur lors de l'export : ${e.message}`;
+  }
+}
+
+// --- RECHERCHE GLOBALE DANS LA BASE DE DONNÉES ---
+async function performGlobalSearch() {
+  const input = document.getElementById("global-search-input");
+  const countBar = document.getElementById("search-count-bar");
+  const container = document.getElementById("search-container");
+  if (!input || !container || !countBar) return;
+
+  const q = input.value.trim();
+  const sort = document.getElementById("search-sort")?.value || "date_asc";
+  const owned = document.getElementById("search-owned-filter")?.value || "all";
+
+  if (!q) {
+    countBar.textContent = "Saisissez un titre pour rechercher dans la base (ex : Star Wars, Hunger Games, Dune, Nolan...)";
+    container.innerHTML = "";
+    return;
+  }
+
+  container.innerHTML = '<div style="color: #64748b; padding: 25px; text-align: center;">Recherche en cours...</div>';
+
+  try {
+    const url = `/api/search?q=${encodeURIComponent(q)}&sort=${encodeURIComponent(sort)}&owned=${encodeURIComponent(owned)}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (!data.movies || data.movies.length === 0) {
+      countBar.textContent = `0 film trouvé pour "${q}" dans la base locale`;
+      container.innerHTML = '<div style="padding: 40px; text-align: center; color: #94a3b8;">Aucun film trouvé dans la base locale pour cette recherche.</div>';
+      return;
+    }
+
+    countBar.textContent = `${data.count} film(s) trouvé(s) pour "${q}" :`;
+
+    const grid = document.createElement("div");
+    grid.className = "grid-search";
+
+    data.movies.forEach(m => {
+      const card = createCompactCard(m);
+      grid.appendChild(card);
+    });
+
+    container.innerHTML = "";
+    container.appendChild(grid);
+  } catch (err) {
+    console.error("Erreur recherche globale :", err);
+    container.innerHTML = `<div style="color: #ef4444; padding: 20px;">Erreur lors de la recherche : ${err.message}</div>`;
   }
 }
 

@@ -14,6 +14,7 @@ Letterboxd-Perso est une application web personnelle de tri, de notation et d'ar
 
 **Dans le périmètre (V1)** :
 - Consultation et tri par période des sorties cinéma françaises (calendrier des mercredis, mois, années).
+- Recherche globale dans la base locale (titre, saga, réalisateur) avec tri chronologique et édition directe.
 - Filtrage anti-bruit ciblé : exclusion des courts-métrages (< 50 minutes), des entrées techniques TMDb factices et des séances uniques non commerciales.
 - Traitement spécifique des ressorties et reprises en salle (isolement en bas de liste et bascule masquer/afficher).
 - Marquage d'état en base : films rejetés (`status = 'dismissed'`), conservés (`status = 'kept'`), vus (`is_watched = 1`), possédés (`is_owned = 1`).

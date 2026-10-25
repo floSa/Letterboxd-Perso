@@ -873,29 +873,17 @@ body {
   color: var(--text-muted);
 }
 
-.grid-month {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
-  gap: 12px;
-}
-
 /* --------------------------------------------------------
-   MODE ANNÉE : GRILLE DENSE (5 PAR LIGNE MINIMUM)
+   GRILLES HARMONISÉES (MOIS, ANNÉE, RECHERCHE : STRICTEMENT 6 PAR LIGNE)
    -------------------------------------------------------- */
-.grid-year {
+.grid-month, .grid-year, .grid-search {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
   gap: 12px;
 }
 
-@media (min-width: 1200px) {
-  .grid-year {
-    grid-template-columns: repeat(5, 1fr);
-  }
-}
-
-@media (min-width: 1450px) {
-  .grid-year {
+@media (min-width: 1100px) {
+  .grid-month, .grid-year, .grid-search {
     grid-template-columns: repeat(6, 1fr);
   }
 }

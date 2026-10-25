@@ -17,6 +17,7 @@
         <span class="brand-name">CinéTriage</span>
       </div>
       <nav class="main-nav">
+        <button class="nav-tab" data-tab="search">Rechercher</button>
         <button class="nav-tab active" data-tab="triage">Sorties Cinéma</button>
         <button class="nav-tab" data-tab="watchlist">Ma Sélection <span id="badge-watchlist" class="nav-count">0</span></button>
         <button class="nav-tab" data-tab="watched">Films Vus <span id="badge-watched" class="nav-count">0</span></button>
@@ -54,9 +55,47 @@
   <main class="app-container">
 
     <!-- ======================================================== -->
+    <!-- ONGLET RECHERCHER DANS LA BASE DE DONNÉES -->
+    <!-- ======================================================== -->
+    <section id="tab-content-search" class="tab-pane hidden">
+      <div class="filter-sticky-header">
+        <div class="filter-bar filter-bar-panel">
+          <div class="filter-item search-box-item" style="flex: 1; min-width: 260px;">
+            <input type="text" id="global-search-input" class="search-input" placeholder="🔍 Rechercher un film dans la base (titre, saga, réalisateur)..." style="width: 100%; font-size: 0.92rem; padding: 7px 12px;">
+          </div>
+          <div class="filter-item">
+            <label>Trier par :</label>
+            <select id="search-sort" class="custom-select">
+              <option value="date_asc">📅 Date de sortie (chronologique)</option>
+              <option value="date_desc">📅 Date de sortie (plus récent)</option>
+              <option value="rating_desc">⭐ Meilleure note</option>
+              <option value="title_asc">🔤 Titre alphabétique</option>
+            </select>
+          </div>
+          <div class="filter-item">
+            <label>Possession :</label>
+            <select id="search-owned-filter" class="custom-select">
+              <option value="all">Tous</option>
+              <option value="owned">🎯 Possédés</option>
+              <option value="not_owned">Non possédés</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="search-count-bar" class="week-count-bar" style="margin-bottom: 14px; color: #94a3b8; font-size: 0.85rem;">
+        Saisissez un titre pour rechercher dans la base (ex : Star Wars, Hunger Games, Dune, Nolan...)
+      </div>
+
+      <div id="search-container" class="search-container">
+        <!-- Rendu dynamique en grille 6 colonnes via createCompactCard -->
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
     <!-- ONGLET 1 : SORTIES CINÉMA (TRIAGE SEMAINE / MOIS / ANNÉE) -->
     <!-- ======================================================== -->
-    <section id="tab-content-triage" class="tab-pane active">
+    <section id="tab-content-triage" class="tab-pane">
 
       <!-- BANDEAU FIXE AU SCROLL : NAVIGATION PÉRIODE & CONTRÔLES -->
       <div class="triage-sticky-header">
@@ -241,6 +280,6 @@
     <button id="toast-undo" class="toast-undo">Annuler</button>
   </div>
 
-  <script src="/app.js?v=2.3"></script>
+  <script src="/app.js?v=2.4"></script>
 </body>
 </html>

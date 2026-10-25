@@ -118,6 +118,7 @@ python server.py
 | `GET` | `/api/stats` | Compteurs globaux (films répertoriés, vus, conservés, rejetés) |
 | `GET` | `/api/watchlist` | Films de la sélection avec filtres (genre, envie min, possession, dates) |
 | `GET` | `/api/watched` | Historique des films vus avec filtres et options de tri |
+| `GET` | `/api/search` | Recherche d'un film dans la base locale (titre, saga, réalisateur) |
 | `GET` | `/api/sync-status` | Progression de la tâche de synchronisation en arrière-plan |
 | `POST` | `/api/rate` | Enregistrement d'une note de visionnage ou de priorité d'envie |
 | `POST` | `/api/owned` | Bascule de l'état possédé en bibliothèque (0 ou 1) |

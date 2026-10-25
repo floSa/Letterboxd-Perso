@@ -245,6 +245,14 @@ class CineTriageHandler(SimpleHTTPRequestHandler):
             )
             return self.send_json({"movies": movies, "count": len(movies)})
 
+        # 5b. API : Recherche globale dans la base
+        elif path == "/api/search":
+            q = params.get("q", [""])[0]
+            sort_by = params.get("sort", ["date_asc"])[0]
+            owned = params.get("owned", ["all"])[0]
+            movies = db.search_movies(q, sort_by=sort_by, owned=owned)
+            return self.send_json({"movies": movies, "count": len(movies), "query": q})
+
         # 6. API : État de la synchronisation
         elif path == "/api/sync-status":
             return self.send_json(sync_state)
