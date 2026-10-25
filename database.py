@@ -87,6 +87,21 @@ def init_db():
         """)
         conn.commit()
 
+POSTERS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "posters")
+
+def _format_movie_row(row) -> dict:
+    """Formate une ligne de film en résolvant le poster en local ou en w185."""
+    d = dict(row)
+    p_url = d.get("poster_url")
+    if p_url and "image.tmdb.org" in p_url:
+        filename = p_url.split("/")[-1]
+        local_path = os.path.join(POSTERS_DIR, filename)
+        if os.path.isfile(local_path):
+            d["poster_url"] = f"/static/posters/{filename}"
+        else:
+            d["poster_url"] = f"https://image.tmdb.org/t/p/w185/{filename}"
+    return d
+
 def insert_or_update_movie(movie: dict):
     """Insère ou met à jour les métadonnées d'un film sans écraser le statut utilisateur."""
     m = dict(movie)
@@ -214,7 +229,7 @@ def get_movies_by_week(week_date: str, include_dismissed: bool = False, cinema_o
             query += " ORDER BY is_reprise ASC, vote_average DESC, title ASC"
 
         cursor.execute(query, params)
-        return [dict(row) for row in cursor.fetchall()]
+        return [_format_movie_row(row) for row in cursor.fetchall()]
 
 def get_movies_by_month(year: int, month: int, cinema_only: bool = False, sort_by: str = "tmdb_desc", hide_reprises: bool = False):
     """Récupère les films d'un mois donné avec filtres et tri."""
@@ -242,7 +257,7 @@ def get_movies_by_month(year: int, month: int, cinema_only: bool = False, sort_b
             query += " ORDER BY is_reprise ASC, release_date ASC, title ASC"
 
         cursor.execute(query, params)
-        return [dict(row) for row in cursor.fetchall()]
+        return [_format_movie_row(row) for row in cursor.fetchall()]
 
 def get_movies_by_year(year: int, cinema_only: bool = False, sort_by: str = "tmdb_desc", hide_reprises: bool = False):
     """Récupère les films d'une année donnée avec filtres et tri."""
@@ -269,7 +284,7 @@ def get_movies_by_year(year: int, cinema_only: bool = False, sort_by: str = "tmd
             query += " ORDER BY is_reprise ASC, release_date ASC, title ASC"
 
         cursor.execute(query, params)
-        return [dict(row) for row in cursor.fetchall()]
+        return [_format_movie_row(row) for row in cursor.fetchall()]
 
 def dismiss_noise(week_date: str = None, all_db: bool = False) -> int:
     """
@@ -467,7 +482,7 @@ def get_watchlist(genre: str = None, min_want: int = 1, search: str = None, date
             query += " AND is_owned = 0"
         query += " ORDER BY want_rating DESC, release_date DESC"
         cursor.execute(query, params)
-        return [dict(row) for row in cursor.fetchall()]
+        return [_format_movie_row(row) for row in cursor.fetchall()]
 
 def get_watched_movies(year: int = None, genre: str = None, sort_by: str = "rating_desc", date_from: str = None, date_to: str = None, owned: str = None):
     """Retourne les films vus avec possibilité de filtrer par plage de dates, genre, possession et note."""
@@ -500,7 +515,7 @@ def get_watched_movies(year: int = None, genre: str = None, sort_by: str = "rati
             query += " ORDER BY title ASC"
             
         cursor.execute(query, params)
-        return [dict(row) for row in cursor.fetchall()]
+        return [_format_movie_row(row) for row in cursor.fetchall()]
 
 def get_all_genres():
     """Extrait tous les genres uniques présents en base."""
@@ -586,5 +601,5 @@ def search_movies(query_str: str, sort_by: str = "date_asc", owned: str = None, 
         params.append(limit)
         
         cursor.execute(sql, params)
-        return [dict(row) for row in cursor.fetchall()]
+        return [_format_movie_row(row) for row in cursor.fetchall()]
 

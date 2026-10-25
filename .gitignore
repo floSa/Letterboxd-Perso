@@ -14,6 +14,9 @@ __pycache__/
 *.db-wal
 *.db-shm
 
+# Cache local des affiches (hors-ligne)
+static/posters/
+
 # IDE & Système
 .vscode/
 .idea/
