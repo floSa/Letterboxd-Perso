@@ -334,7 +334,7 @@ function renderWeekView(movies, container, countBar) {
     return;
   }
 
-  countBar.textContent = `${movies.length} film(s) sorti(s) cette semaine :`;
+  countBar.textContent = `${movies.length} films cette semaine :`;
   const list = document.createElement("div");
   list.className = "movies-list-week";
 
@@ -510,12 +510,12 @@ function renderMonthView(weeks, container, countBar) {
   }
 
   let totalM = weeks.reduce((sum, w) => sum + w.movie_count, 0);
-  countBar.textContent = `${totalM} film(s) réparti(s) sur ${weeks.length} semaine(s) (coulissez avec le pad, la souris ou les flèches) :`;
+  countBar.textContent = `${totalM} films sur ${weeks.length} semaines :`;
 
   container.innerHTML = "";
 
   weeks.forEach(w => {
-    const block = createCarouselBlock(w.label, `${w.movie_count} film(s)`, w.movies);
+    const block = createCarouselBlock(w.label, `${w.movie_count} films`, w.movies);
     container.appendChild(block);
   });
 }
@@ -523,7 +523,7 @@ function renderMonthView(weeks, container, countBar) {
 // 3. VUE ANNÉE : RUBANS PAR MOIS (1 LIGNE PAR MOIS, CLASSÉS PAR DATE DU DÉBUT À LA FIN DU MOIS)
 function renderYearView(data, container, countBar) {
   const months = data.months || [];
-  countBar.textContent = `${data.total_movies} film(s) en ${data.year} répartis sur ${months.length} mois (coulissez horizontalement de gauche à droite) :`;
+  countBar.textContent = `${data.total_movies} films en ${data.year} sur ${months.length} mois :`;
 
   if (!months || months.length === 0) {
     container.innerHTML = '<div style="padding: 30px; text-align: center; color: #94a3b8;">Aucun film répertorié pour cette année.</div>';
@@ -533,7 +533,7 @@ function renderYearView(data, container, countBar) {
   container.innerHTML = "";
 
   months.forEach(m => {
-    const block = createCarouselBlock(m.label, `${m.movie_count} film(s)`, m.movies);
+    const block = createCarouselBlock(m.label, `${m.movie_count} films`, m.movies);
     container.appendChild(block);
   });
 }
@@ -1099,7 +1099,7 @@ async function performGlobalSearch() {
       return;
     }
 
-    countBar.textContent = `${data.count} film(s) trouvé(s) pour "${q}" :`;
+    countBar.textContent = `${data.count} films trouvés pour "${q}" :`;
 
     const grid = document.createElement("div");
     grid.className = "grid-search";

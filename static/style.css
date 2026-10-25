@@ -345,8 +345,9 @@ body {
   padding: 0 4px;
   font-size: 0.85rem;
   color: var(--text-muted);
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 12px;
+  white-space: nowrap;
 }
 
 .sub-info-left {
