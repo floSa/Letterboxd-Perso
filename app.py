@@ -17,7 +17,7 @@ db.init_db()
 
 # Configuration de la page
 st.set_page_config(
-    page_title="CinéTriage - Sorties France",
+    page_title="Movie Database - Sorties France",
     page_icon="🎬",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -142,7 +142,7 @@ if "target_date" not in st.session_state:
     st.session_state["target_date"] = datetime.now().date()
 
 with st.sidebar:
-    st.title("🎬 CinéTriage")
+    st.title("🎬 Movie Database")
     st.caption("Sorties cinéma France • 2000 à aujourd'hui")
     st.markdown("---")
     

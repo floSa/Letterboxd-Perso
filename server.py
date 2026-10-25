@@ -412,7 +412,7 @@ class CineTriageHandler(SimpleHTTPRequestHandler):
 def run_server():
     server_address = ("127.0.0.1", PORT)
     httpd = HTTPServer(server_address, CineTriageHandler)
-    print(f"Serveur CineTriage actif sur http://localhost:{PORT}")
+    print(f"Serveur Movie Database actif sur http://localhost:{PORT}")
     httpd.serve_forever()
 
 if __name__ == "__main__":
