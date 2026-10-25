@@ -1,6 +1,7 @@
 import requests
 import json
 import os
+import calendar
 from datetime import datetime, timedelta
 
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
@@ -139,7 +140,8 @@ def fetch_movie_director_and_runtime(movie_id: int, api_key: str, movie_year: in
 def fetch_french_releases_for_year(year: int, api_key: str, progress_callback=None):
     """
     Interroge l'API TMDb pour récupérer toutes les sorties cinéma en France pour une année.
-    Filtre par region=FR et type de sortie cinéma.
+    Effectue les requêtes mois par mois (1 à 12) pour éviter le plafonnement artificiel de pagination
+    et garantir une couverture complète de janvier à décembre.
     """
     if not api_key:
         raise ValueError("Clé ou Jeton API TMDb requis.")
@@ -147,76 +149,91 @@ def fetch_french_releases_for_year(year: int, api_key: str, progress_callback=No
     base_url = "https://api.themoviedb.org/3/discover/movie"
     auth_params, headers = _build_auth(api_key)
     all_movies = []
-    page = 1
-    total_pages = 1
+    seen_ids = set()
 
-    while page <= total_pages and page <= 35: # Sécurité ~700 films
-        params = {
-            **auth_params,
-            "region": "FR",
-            "language": "fr-FR",
-            "release_date.gte": f"{year}-01-01",
-            "release_date.lte": f"{year}-12-31",
-            "with_release_type": "2|3", # 2: Limited Theatrical, 3: Theatrical
-            "sort_by": "release_date.desc",
-            "page": page
-        }
-        resp = requests.get(base_url, params=params, headers=headers, timeout=15)
-        if resp.status_code != 200:
-            break
-        data = resp.json()
-        total_pages = data.get("total_pages", 1)
-        results = data.get("results", [])
-        
-        for item in results:
-            release_date = item.get("release_date")
-            if not release_date:
-                continue
-                
-            wednesday = get_wednesday_of_date(release_date)
-            genre_names = [TMDB_GENRES.get(gid, "") for gid in item.get("genre_ids", []) if gid in TMDB_GENRES]
-            genres_str = ", ".join(filter(None, genre_names))
-            
-            poster_path = item.get("poster_path")
-            poster_url = f"https://image.tmdb.org/t/p/w342{poster_path}" if poster_path else ""
-            
-            # Détection de reprise sur l'année de sortie originelle
-            is_reprise = 0
-            orig_year = 0
-            orig_date = release_date
-            if release_date and len(release_date) >= 4:
-                try:
-                    rd_year = int(release_date[:4])
-                    if (year - rd_year) >= 2:
-                        is_reprise = 1
-                        orig_year = rd_year
-                except Exception:
-                    pass
+    for month in range(1, 13):
+        last_day = calendar.monthrange(year, month)[1]
+        start_date = f"{year}-{month:02d}-01"
+        end_date = f"{year}-{month:02d}-{last_day:02d}"
 
-            movie_obj = {
-                "tmdb_id": item["id"],
-                "title": item.get("title") or item.get("original_title", "Sans titre"),
-                "original_title": item.get("original_title", ""),
-                "release_date": release_date,
-                "year": year,
-                "week_start_date": wednesday,
-                "director": "Inconnu",
-                "cast": "",
-                "genres": genres_str,
-                "synopsis": item.get("overview", "Aucun synopsis disponible."),
-                "poster_url": poster_url,
-                "runtime": 0,
-                "vote_average": round(item.get("vote_average", 0.0), 1),
-                "is_reprise": is_reprise,
-                "original_year": orig_year,
-                "original_release_date": orig_date
+        page = 1
+        total_pages = 1
+        while page <= total_pages and page <= 20: # Sécurité ~400 films/mois
+            params = {
+                **auth_params,
+                "region": "FR",
+                "language": "fr-FR",
+                "release_date.gte": start_date,
+                "release_date.lte": end_date,
+                "with_release_type": "2|3", # 2: Limited Theatrical, 3: Theatrical
+                "sort_by": "release_date.asc",
+                "page": page
             }
-            all_movies.append(movie_obj)
-            
+            try:
+                resp = requests.get(base_url, params=params, headers=headers, timeout=15)
+                if resp.status_code != 200:
+                    break
+                data = resp.json()
+            except Exception:
+                break
+
+            total_pages = data.get("total_pages", 1)
+            results = data.get("results", [])
+
+            for item in results:
+                tmdb_id = item.get("id")
+                if not tmdb_id or tmdb_id in seen_ids:
+                    continue
+                seen_ids.add(tmdb_id)
+
+                release_date = item.get("release_date")
+                if not release_date:
+                    continue
+
+                wednesday = get_wednesday_of_date(release_date)
+                genre_names = [TMDB_GENRES.get(gid, "") for gid in item.get("genre_ids", []) if gid in TMDB_GENRES]
+                genres_str = ", ".join(filter(None, genre_names))
+
+                poster_path = item.get("poster_path")
+                poster_url = f"https://image.tmdb.org/t/p/w342{poster_path}" if poster_path else ""
+
+                # Détection de reprise sur l'année de sortie originelle
+                is_reprise = 0
+                orig_year = 0
+                orig_date = release_date
+                if release_date and len(release_date) >= 4:
+                    try:
+                        rd_year = int(release_date[:4])
+                        if (year - rd_year) >= 2:
+                            is_reprise = 1
+                            orig_year = rd_year
+                    except Exception:
+                        pass
+
+                movie_obj = {
+                    "tmdb_id": tmdb_id,
+                    "title": item.get("title") or item.get("original_title", "Sans titre"),
+                    "original_title": item.get("original_title", ""),
+                    "release_date": release_date,
+                    "year": year,
+                    "week_start_date": wednesday,
+                    "director": "Inconnu",
+                    "cast": "",
+                    "genres": genres_str,
+                    "synopsis": item.get("overview", "Aucun synopsis disponible."),
+                    "poster_url": poster_url,
+                    "runtime": 0,
+                    "vote_average": round(item.get("vote_average", 0.0), 1),
+                    "is_reprise": is_reprise,
+                    "original_year": orig_year,
+                    "original_release_date": orig_date
+                }
+                all_movies.append(movie_obj)
+
+            page += 1
+
         if progress_callback:
-            progress_callback(page, min(total_pages, 35), len(all_movies))
-            
-        page += 1
+            progress_callback(month, 12, len(all_movies))
 
     return all_movies
 
