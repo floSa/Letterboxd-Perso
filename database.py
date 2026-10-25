@@ -49,12 +49,15 @@ def init_db():
             cursor.execute("ALTER TABLE movies ADD COLUMN original_year INTEGER DEFAULT 0;")
         if "original_release_date" not in columns:
             cursor.execute("ALTER TABLE movies ADD COLUMN original_release_date TEXT DEFAULT '';")
+        if "is_owned" not in columns:
+            cursor.execute("ALTER TABLE movies ADD COLUMN is_owned INTEGER DEFAULT 0;")
 
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_movies_year ON movies(year);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_movies_week ON movies(week_start_date);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_movies_status ON movies(status);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_movies_watched ON movies(is_watched);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_movies_reprise ON movies(is_reprise);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_movies_owned ON movies(is_owned);")
 
         # Identification automatique immédiate des reprises évidentes (règles locales 0 ms)
         cursor.execute("""
@@ -346,6 +349,33 @@ def set_movie_rating(tmdb_id: int, user_rating: float):
             """, (tmdb_id,))
         conn.commit()
 
+def toggle_movie_owned(tmdb_id: int) -> int:
+    """Bascule l'état possédé (0 ou 1) d'un film dans la bibliothèque."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT is_owned FROM movies WHERE tmdb_id = ?", (tmdb_id,))
+        row = cursor.fetchone()
+        cur_val = row["is_owned"] if row and row["is_owned"] is not None else 0
+        new_val = 0 if cur_val == 1 else 1
+        cursor.execute("""
+            UPDATE movies 
+            SET is_owned = ?, updated_at = CURRENT_TIMESTAMP 
+            WHERE tmdb_id = ?
+        """, (new_val, tmdb_id))
+        conn.commit()
+        return new_val
+
+def set_movie_owned(tmdb_id: int, is_owned: int):
+    """Définit explicitement l'état possédé (0 ou 1) d'un film."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE movies 
+            SET is_owned = ?, updated_at = CURRENT_TIMESTAMP 
+            WHERE tmdb_id = ?
+        """, (1 if is_owned else 0, tmdb_id))
+        conn.commit()
+
 def get_closest_available_wednesday():
     """Trouve la semaine la plus proche de la date actuelle parmi les semaines enregistrées."""
     today_str = datetime.now().strftime("%Y-%m-%d")
@@ -365,8 +395,8 @@ def get_closest_available_wednesday():
         row = cursor.fetchone()
         return row["week_start_date"] if row else today_str
 
-def get_watchlist(genre: str = None, min_want: int = 1, search: str = None):
-    """Retourne la liste des films gardés et non vus (priorité à voir)."""
+def get_watchlist(genre: str = None, min_want: int = 1, search: str = None, date_from: str = None, date_to: str = None, owned: str = None):
+    """Retourne la liste des films gardés et non vus (priorité à voir) avec filtres de date et possession."""
     with get_connection() as conn:
         cursor = conn.cursor()
         query = "SELECT * FROM movies WHERE is_watched = 0 AND status = 'kept' AND want_rating >= ?"
@@ -377,12 +407,22 @@ def get_watchlist(genre: str = None, min_want: int = 1, search: str = None):
         if search:
             query += " AND (title LIKE ? OR director LIKE ?)"
             params.extend([f"%{search}%", f"%{search}%"])
+        if date_from:
+            query += " AND release_date >= ?"
+            params.append(date_from)
+        if date_to:
+            query += " AND release_date <= ?"
+            params.append(date_to)
+        if owned in ["1", "true", "owned"]:
+            query += " AND is_owned = 1"
+        elif owned in ["0", "false", "not_owned"]:
+            query += " AND is_owned = 0"
         query += " ORDER BY want_rating DESC, release_date DESC"
         cursor.execute(query, params)
         return [dict(row) for row in cursor.fetchall()]
 
-def get_watched_movies(year: int = None, genre: str = None, sort_by: str = "rating_desc"):
-    """Retourne les films vus avec possibilité de filtrer et trier par note."""
+def get_watched_movies(year: int = None, genre: str = None, sort_by: str = "rating_desc", date_from: str = None, date_to: str = None, owned: str = None):
+    """Retourne les films vus avec possibilité de filtrer par plage de dates, genre, possession et note."""
     with get_connection() as conn:
         cursor = conn.cursor()
         query = "SELECT * FROM movies WHERE is_watched = 1"
@@ -393,6 +433,16 @@ def get_watched_movies(year: int = None, genre: str = None, sort_by: str = "rati
         if genre and genre != "Tous":
             query += " AND genres LIKE ?"
             params.append(f"%{genre}%")
+        if date_from:
+            query += " AND release_date >= ?"
+            params.append(date_from)
+        if date_to:
+            query += " AND release_date <= ?"
+            params.append(date_to)
+        if owned in ["1", "true", "owned"]:
+            query += " AND is_owned = 1"
+        elif owned in ["0", "false", "not_owned"]:
+            query += " AND is_owned = 0"
             
         if sort_by == "rating_desc":
             query += " ORDER BY user_rating DESC, title ASC"

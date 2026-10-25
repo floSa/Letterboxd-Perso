@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CinéTriage • Mon Letterboxd Personnel</title>
-  <link rel="stylesheet" href="/style.css?v=2.1">
+  <link rel="stylesheet" href="/style.css?v=2.2">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎬</text></svg>">
 </head>
 <body>
@@ -58,55 +58,57 @@
     <!-- ======================================================== -->
     <section id="tab-content-triage" class="tab-pane active">
 
-      <!-- BARRE DE NAVIGATION & CONTRÔLES PLACÉE AU-DESSUS DES FILMS -->
-      <div class="triage-toolbar">
-        <div class="scale-selector">
-          <button class="scale-btn active" data-scale="week">Semaine</button>
-          <button class="scale-btn" data-scale="month">Mois</button>
-          <button class="scale-btn" data-scale="year">Année</button>
-        </div>
-
-        <div class="nav-navigation">
-          <button id="btn-nav-prev" class="btn-nav" title="Période précédente">◀ Précédent</button>
-          <h2 id="period-title" class="period-title">Chargement...</h2>
-          <button id="btn-nav-next" class="btn-nav" title="Période suivante">Suivant ▶</button>
-        </div>
-
-        <div class="date-controls">
-          <button id="btn-today" class="btn-today">Aujourd'hui</button>
-          <input type="date" id="nav-date-input" class="nav-date-input" title="Choisir une date cible">
-        </div>
-      </div>
-
-      <!-- SOUS-TITRE / INFOS NOMBRE DE FILMS & FILTRES RAPIDES ANTI-BRUIT -->
-      <div class="sub-info-bar">
-        <div class="sub-info-left">
-          <span id="period-movie-count" class="movie-count-text"></span>
-          <button id="btn-toggle-cinema" class="btn-filter active" title="Afficher uniquement les vrais longs-métrages cinéma (masque les courts-métrages < 50 min, émissions TV et entrées sans affiche)">
-            🎬 Cinéma uniquement
-          </button>
-          <button id="btn-toggle-reprises" class="btn-filter" title="Masquer les reprises (ressorties et films du patrimoine) pour ne voir que les nouveautés">
-            🔄 Masquer les reprises
-          </button>
-          <button id="btn-clean-noise" class="btn-clean-noise" title="Éliminer d'un coup (supprimer) tous les courts-métrages, entrées sans affiche et bruit de cette période">
-            🧹 Éliminer le bruit
-          </button>
-        </div>
-
-        <div class="sub-info-right">
-          <div class="sort-control">
-            <label for="triage-sort">Trier par :</label>
-            <select id="triage-sort" class="custom-select-small">
-              <option value="tmdb_desc">★ Note TMDb (décroissante)</option>
-              <option value="date_desc">📅 Date de sortie</option>
-              <option value="title_asc">🔤 Titre (A-Z)</option>
-            </select>
+      <!-- BANDEAU FIXE AU SCROLL : NAVIGATION PÉRIODE & CONTRÔLES -->
+      <div class="triage-sticky-header">
+        <div class="triage-toolbar">
+          <div class="scale-selector">
+            <button class="scale-btn active" data-scale="week">Semaine</button>
+            <button class="scale-btn" data-scale="month">Mois</button>
+            <button class="scale-btn" data-scale="year">Année</button>
           </div>
 
-          <div id="year-pagination" class="year-pagination hidden">
-            <button id="btn-page-prev" class="btn-page">◀ Page préc.</button>
-            <span id="page-indicator">Page 1 / 1</span>
-            <button id="btn-page-next" class="btn-page">Page suiv. ▶</button>
+          <div class="nav-navigation">
+            <button id="btn-nav-prev" class="btn-nav" title="Période précédente">◀ Précédent</button>
+            <h2 id="period-title" class="period-title">Chargement...</h2>
+            <button id="btn-nav-next" class="btn-nav" title="Période suivante">Suivant ▶</button>
+          </div>
+
+          <div class="date-controls">
+            <button id="btn-today" class="btn-today">Aujourd'hui</button>
+            <input type="date" id="nav-date-input" class="nav-date-input" title="Choisir une date cible">
+          </div>
+        </div>
+
+        <!-- SOUS-TITRE / INFOS NOMBRE DE FILMS & FILTRES RAPIDES ANTI-BRUIT -->
+        <div class="sub-info-bar">
+          <div class="sub-info-left">
+            <span id="period-movie-count" class="movie-count-text"></span>
+            <button id="btn-toggle-cinema" class="btn-filter active" title="Afficher uniquement les vrais longs-métrages cinéma (masque les courts-métrages < 50 min, émissions TV et entrées sans affiche)">
+              🎬 Cinéma uniquement
+            </button>
+            <button id="btn-toggle-reprises" class="btn-filter" title="Masquer les reprises (ressorties et films du patrimoine) pour ne voir que les nouveautés">
+              🔄 Masquer les reprises
+            </button>
+            <button id="btn-clean-noise" class="btn-clean-noise" title="Éliminer d'un coup (supprimer) tous les courts-métrages, entrées sans affiche et bruit de cette période">
+              🧹 Éliminer le bruit
+            </button>
+          </div>
+
+          <div class="sub-info-right">
+            <div class="sort-control">
+              <label for="triage-sort">Trier par :</label>
+              <select id="triage-sort" class="custom-select-small">
+                <option value="tmdb_desc">★ Note TMDb (décroissante)</option>
+                <option value="date_desc">📅 Date de sortie</option>
+                <option value="title_asc">🔤 Titre (A-Z)</option>
+              </select>
+            </div>
+
+            <div id="year-pagination" class="year-pagination hidden">
+              <button id="btn-page-prev" class="btn-page">◀ Page préc.</button>
+              <span id="page-indicator">Page 1 / 1</span>
+              <button id="btn-page-next" class="btn-page">Page suiv. ▶</button>
+            </div>
           </div>
         </div>
       </div>
@@ -144,6 +146,20 @@
             </select>
           </div>
           <div class="filter-item">
+            <label>Possession :</label>
+            <select id="wl-owned-filter" class="custom-select">
+              <option value="all">Tous</option>
+              <option value="owned">🎯 Possédés</option>
+              <option value="not_owned">Non possédés</option>
+            </select>
+          </div>
+          <div class="filter-item date-range-item">
+            <label>Période :</label>
+            <input type="date" id="wl-date-from" class="custom-input-date" title="Sorti à partir du">
+            <span class="range-sep">au</span>
+            <input type="date" id="wl-date-to" class="custom-input-date" title="Sorti jusqu'au">
+          </div>
+          <div class="filter-item">
             <input type="text" id="wl-search" class="search-input" placeholder="🔍 Titre, réalisateur...">
           </div>
         </div>
@@ -173,11 +189,30 @@
           </div>
           <div class="filter-item">
             <label>Année :</label>
-            <input type="number" id="watched-year" class="custom-input-num" placeholder="Toutes" min="2000" max="2030">
+            <input type="number" id="watched-year" class="custom-input-num" placeholder="Toutes" min="1900" max="2035">
+          </div>
+          <div class="filter-item">
+            <label>Possession :</label>
+            <select id="watched-owned-filter" class="custom-select">
+              <option value="all">Tous</option>
+              <option value="owned">🎯 Possédés</option>
+              <option value="not_owned">Non possédés</option>
+            </select>
+          </div>
+          <div class="filter-item date-range-item">
+            <label>Période :</label>
+            <input type="date" id="watched-date-from" class="custom-input-date" title="Sorti à partir du">
+            <span class="range-sep">au</span>
+            <input type="date" id="watched-date-to" class="custom-input-date" title="Sorti jusqu'au">
           </div>
           <div class="filter-item">
             <label>Genre :</label>
             <select id="watched-genre" class="custom-select">
+              <option value="Tous">Tous</option>
+            </select>
+          </div>
+        </div>
+      </div>
               <option value="Tous">Tous</option>
             </select>
           </div>
@@ -219,6 +254,6 @@
     <button id="toast-undo" class="toast-undo">Annuler</button>
   </div>
 
-  <script src="/app.js?v=2.1"></script>
+  <script src="/app.js?v=2.2"></script>
 </body>
 </html>

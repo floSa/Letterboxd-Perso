@@ -213,7 +213,17 @@ class CineTriageHandler(SimpleHTTPRequestHandler):
             genre = params.get("genre", ["Tous"])[0]
             min_want = float(params.get("min_want", [1.0])[0])
             search = params.get("search", [""])[0]
-            movies = db.get_watchlist(genre=genre, min_want=int(min_want), search=search if search else None)
+            date_from = params.get("date_from", [""])[0]
+            date_to = params.get("date_to", [""])[0]
+            owned = params.get("owned", [""])[0]
+            movies = db.get_watchlist(
+                genre=genre, 
+                min_want=int(min_want), 
+                search=search if search else None,
+                date_from=date_from if date_from else None,
+                date_to=date_to if date_to else None,
+                owned=owned if owned else None
+            )
             return self.send_json({"movies": movies, "count": len(movies)})
 
         # 5. API : Films Vus
@@ -222,7 +232,17 @@ class CineTriageHandler(SimpleHTTPRequestHandler):
             year = int(year_val) if year_val and year_val.isdigit() else None
             genre = params.get("genre", ["Tous"])[0]
             sort_by = params.get("sort", ["rating_desc"])[0]
-            movies = db.get_watched_movies(year=year, genre=genre, sort_by=sort_by)
+            date_from = params.get("date_from", [""])[0]
+            date_to = params.get("date_to", [""])[0]
+            owned = params.get("owned", [""])[0]
+            movies = db.get_watched_movies(
+                year=year, 
+                genre=genre, 
+                sort_by=sort_by,
+                date_from=date_from if date_from else None,
+                date_to=date_to if date_to else None,
+                owned=owned if owned else None
+            )
             return self.send_json({"movies": movies, "count": len(movies)})
 
         # 6. API : État de la synchronisation
@@ -261,6 +281,19 @@ class CineTriageHandler(SimpleHTTPRequestHandler):
             db.set_movie_want(tmdb_id, want_rating)
             stats = db.get_stats()
             return self.send_json({"success": True, "tmdb_id": tmdb_id, "want_rating": want_rating, "stats": stats})
+
+        # 2b. Possédé / Dans ma bibliothèque (0 ou 1)
+        elif path == "/api/owned":
+            tmdb_id = body.get("tmdb_id")
+            if not tmdb_id:
+                return self.send_error_json("tmdb_id requis")
+            if "is_owned" in body:
+                val = 1 if body.get("is_owned") in [1, True, "1", "true"] else 0
+                db.set_movie_owned(tmdb_id, val)
+                new_val = val
+            else:
+                new_val = db.toggle_movie_owned(tmdb_id)
+            return self.send_json({"success": True, "tmdb_id": tmdb_id, "is_owned": new_val})
 
         # 3. Supprimer / Éliminer un film
         elif path == "/api/dismiss":

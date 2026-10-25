@@ -93,11 +93,23 @@ function initEventListeners() {
   document.getElementById("wl-genre-filter").addEventListener("change", loadWatchlist);
   document.getElementById("wl-min-want").addEventListener("change", loadWatchlist);
   document.getElementById("wl-search").addEventListener("input", debounce(loadWatchlist, 300));
+  const wlOwned = document.getElementById("wl-owned-filter");
+  if (wlOwned) wlOwned.addEventListener("change", loadWatchlist);
+  const wlFrom = document.getElementById("wl-date-from");
+  if (wlFrom) wlFrom.addEventListener("change", loadWatchlist);
+  const wlTo = document.getElementById("wl-date-to");
+  if (wlTo) wlTo.addEventListener("change", loadWatchlist);
 
   // 9. Filtres Vus
   document.getElementById("watched-sort").addEventListener("change", loadWatched);
   document.getElementById("watched-year").addEventListener("input", debounce(loadWatched, 300));
   document.getElementById("watched-genre").addEventListener("change", loadWatched);
+  const watchedOwned = document.getElementById("watched-owned-filter");
+  if (watchedOwned) watchedOwned.addEventListener("change", loadWatched);
+  const watchedFrom = document.getElementById("watched-date-from");
+  if (watchedFrom) watchedFrom.addEventListener("change", loadWatched);
+  const watchedTo = document.getElementById("watched-date-to");
+  if (watchedTo) watchedTo.addEventListener("change", loadWatched);
 
   // 10. Boutons Obsidian
   document.getElementById("btn-export-all").addEventListener("click", () => exportObsidian("all"));
@@ -384,9 +396,11 @@ function renderWeekView(movies, container, countBar) {
 
     const starWidget = createRatingWidget(m.tmdb_id, m.user_rating || 0.0, "star");
     const heartWidget = createRatingWidget(m.tmdb_id, m.want_rating || 0.0, "heart");
+    const ownedBtn = createOwnedButton(m.tmdb_id, m.is_owned || 0);
 
     colActions.appendChild(starWidget);
     colActions.appendChild(heartWidget);
+    colActions.appendChild(ownedBtn);
 
     row.appendChild(colDel);
     row.appendChild(colPoster);
@@ -513,6 +527,11 @@ function createCompactCard(m) {
   ratings.appendChild(createRatingWidget(m.tmdb_id, m.user_rating || 0.0, "star"));
   ratings.appendChild(createRatingWidget(m.tmdb_id, m.want_rating || 0.0, "heart"));
   content.appendChild(ratings);
+
+  const ownedRow = document.createElement("div");
+  ownedRow.className = "card-owned-row";
+  ownedRow.appendChild(createOwnedButton(m.tmdb_id, m.is_owned || 0));
+  content.appendChild(ownedRow);
 
   card.appendChild(headerBar);
   card.appendChild(posterBox);
@@ -655,6 +674,49 @@ function createRatingWidget(tmdbId, initialVal, mode) {
   return widget;
 }
 
+// --- BOUTON DE POSSESSION (CIBLE DANS MA BIBLIOTHÈQUE) ---
+function createOwnedButton(tmdbId, initialOwned) {
+  const btn = document.createElement("button");
+  let owned = (initialOwned === 1 || initialOwned === true || initialOwned === "1");
+
+  const targetSvg = `
+    <svg class="owned-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <circle cx="12" cy="12" r="5"/>
+      <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+    </svg>`;
+
+  function updateUi() {
+    btn.className = `btn-owned-toggle ${owned ? "is-owned" : ""}`;
+    btn.innerHTML = `${targetSvg} <span class="owned-label">${owned ? "Possédé" : "Non possédé"}</span>`;
+    btn.title = owned ? "🎯 Possédé dans ma bibliothèque (cliquer pour retirer)" : "🎯 Non possédé (cliquer pour marquer comme possédé)";
+  }
+
+  updateUi();
+
+  btn.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    owned = !owned;
+    updateUi();
+
+    try {
+      await fetch("/api/owned", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tmdb_id: tmdbId, is_owned: owned ? 1 : 0 })
+      });
+      viewCache.clear();
+    } catch (err) {
+      console.error("Erreur enregistrement possession :", err);
+      owned = !owned;
+      updateUi();
+    }
+  });
+
+  return btn;
+}
+
 // --- ÉLIMINATION INSTANTANÉE (DISMISS) AVEC ANNULATION RAPIDE ---
 async function dismissMovie(tmdbId, element) {
   element.classList.add("fade-out");
@@ -792,10 +854,18 @@ async function loadWatchlist() {
 
   const genre = document.getElementById("wl-genre-filter").value;
   const minWant = document.getElementById("wl-min-want").value;
-  const search = document.getElementById("wl-search").value;
+  const search = document.getElementById("wl-search").value.trim();
+  const owned = document.getElementById("wl-owned-filter")?.value || "all";
+  const dateFrom = document.getElementById("wl-date-from")?.value || "";
+  const dateTo = document.getElementById("wl-date-to")?.value || "";
+
+  let url = `/api/watchlist?genre=${encodeURIComponent(genre)}&min_want=${minWant}&search=${encodeURIComponent(search)}`;
+  if (owned !== "all") url += `&owned=${encodeURIComponent(owned)}`;
+  if (dateFrom) url += `&date_from=${encodeURIComponent(dateFrom)}`;
+  if (dateTo) url += `&date_to=${encodeURIComponent(dateTo)}`;
 
   try {
-    const res = await fetch(`/api/watchlist?genre=${encodeURIComponent(genre)}&min_want=${minWant}&search=${encodeURIComponent(search)}`);
+    const res = await fetch(url);
     const data = await res.json();
     document.getElementById("badge-watchlist").textContent = data.count;
 
@@ -830,6 +900,7 @@ async function loadWatchlist() {
       colAct.className = "col-actions";
       colAct.appendChild(createRatingWidget(m.tmdb_id, m.user_rating || 0.0, "star"));
       colAct.appendChild(createRatingWidget(m.tmdb_id, m.want_rating || 0.0, "heart"));
+      colAct.appendChild(createOwnedButton(m.tmdb_id, m.is_owned || 0));
       row.appendChild(colAct);
       list.appendChild(row);
     });
@@ -848,9 +919,17 @@ async function loadWatched() {
   const sort = document.getElementById("watched-sort").value;
   const year = document.getElementById("watched-year").value;
   const genre = document.getElementById("watched-genre").value;
+  const owned = document.getElementById("watched-owned-filter")?.value || "all";
+  const dateFrom = document.getElementById("watched-date-from")?.value || "";
+  const dateTo = document.getElementById("watched-date-to")?.value || "";
+
+  let url = `/api/watched?sort=${sort}&year=${encodeURIComponent(year)}&genre=${encodeURIComponent(genre)}`;
+  if (owned !== "all") url += `&owned=${encodeURIComponent(owned)}`;
+  if (dateFrom) url += `&date_from=${encodeURIComponent(dateFrom)}`;
+  if (dateTo) url += `&date_to=${encodeURIComponent(dateTo)}`;
 
   try {
-    const res = await fetch(`/api/watched?sort=${sort}&year=${encodeURIComponent(year)}&genre=${encodeURIComponent(genre)}`);
+    const res = await fetch(url);
     const data = await res.json();
     document.getElementById("badge-watched").textContent = data.count;
 
@@ -881,6 +960,7 @@ async function loadWatched() {
       const colAct = document.createElement("div");
       colAct.className = "col-actions";
       colAct.appendChild(createRatingWidget(m.tmdb_id, m.user_rating || 0.0, "star"));
+      colAct.appendChild(createOwnedButton(m.tmdb_id, m.is_owned || 0));
       row.appendChild(colAct);
       list.appendChild(row);
     });
