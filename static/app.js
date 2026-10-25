@@ -654,7 +654,6 @@ function createRatingWidget(tmdbId, initialVal, mode) {
 
   return widget;
 }
-}
 
 // --- ÉLIMINATION INSTANTANÉE (DISMISS) AVEC ANNULATION RAPIDE ---
 async function dismissMovie(tmdbId, element) {
