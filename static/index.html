@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Movie Database • Mon Letterboxd Personnel</title>
-  <link rel="stylesheet" href="/style.css?v=2.5">
+  <link rel="stylesheet" href="/style.css?v=2.6">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎬</text></svg>">
 </head>
 <body>
@@ -113,8 +113,36 @@
           </div>
 
           <div class="date-controls">
-            <button id="btn-today" class="btn-today">Aujourd'hui</button>
-            <input type="date" id="nav-date-input" class="nav-date-input" title="Choisir une date cible">
+            <button id="btn-today" class="btn-today" title="Revenir à la date courante">Aujourd'hui</button>
+
+            <!-- Mode Semaine : sélection date spécifique -->
+            <div id="ctrl-week-picker" class="date-ctrl-group">
+              <input type="date" id="nav-date-input" class="nav-date-input" title="Choisir une date cible">
+            </div>
+
+            <!-- Mode Mois : sélection directe Mois + Année -->
+            <div id="ctrl-month-picker" class="date-ctrl-group hidden">
+              <select id="nav-month-select" class="nav-select-period" title="Choisir le mois">
+                <option value="0">Janvier</option>
+                <option value="1">Février</option>
+                <option value="2">Mars</option>
+                <option value="3">Avril</option>
+                <option value="4">Mai</option>
+                <option value="5">Juin</option>
+                <option value="6">Juillet</option>
+                <option value="7">Août</option>
+                <option value="8">Septembre</option>
+                <option value="9">Octobre</option>
+                <option value="10">Novembre</option>
+                <option value="11">Décembre</option>
+              </select>
+              <select id="nav-month-year-select" class="nav-select-period" title="Choisir l'année"></select>
+            </div>
+
+            <!-- Mode Année : sélection directe de l'année (1 clic, 0 requête intermédiaire) -->
+            <div id="ctrl-year-picker" class="date-ctrl-group hidden">
+              <select id="nav-year-select" class="nav-select-period" title="Choisir l'année"></select>
+            </div>
           </div>
         </div>
 
@@ -280,6 +308,6 @@
     <button id="toast-undo" class="toast-undo">Annuler</button>
   </div>
 
-  <script src="/app.js?v=2.9"></script>
+  <script src="/app.js?v=3.0"></script>
 </body>
 </html>

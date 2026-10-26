@@ -337,6 +337,39 @@ body {
   color-scheme: dark;
 }
 
+.date-ctrl-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.date-ctrl-group.hidden {
+  display: none !important;
+}
+
+.nav-select-period {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 6px;
+  outline: none;
+  cursor: pointer;
+  color-scheme: dark;
+  transition: all 0.15s ease;
+}
+
+.nav-select-period:hover {
+  background-color: #242c34;
+  border-color: var(--border-strong);
+}
+
+.nav-select-period:focus {
+  border-color: var(--accent-green);
+}
+
 .sub-info-bar {
   display: flex;
   align-items: center;

@@ -113,8 +113,8 @@ class CineTriageHandler(SimpleHTTPRequestHandler):
 
                 movies = db.get_movies_by_week(wed_str, include_dismissed=False, cinema_only=cinema_only, sort_by=sort_by, hide_reprises=hide_reprises)
 
-                # Fetch TMDb automatique si vide et clé présente
-                if not movies and api_key:
+                # Fetch TMDb automatique si vide, clé présente et année valide (1960-2027)
+                if not movies and api_key and (1960 <= wednesday.year <= 2027):
                     try:
                         fetched = tmdb.fetch_movies_for_date_range(wed_str, tue_str, api_key)
                         if fetched:
@@ -148,8 +148,8 @@ class CineTriageHandler(SimpleHTTPRequestHandler):
                 month = int(params.get("month", [target_dt.month])[0])
                 month_movies = db.get_movies_by_month(year, month, cinema_only=cinema_only, sort_by=sort_by, hide_reprises=hide_reprises)
 
-                # Fetch TMDb automatique si le mois est vide et clé présente
-                if not month_movies and api_key:
+                # Fetch TMDb automatique si le mois est vide, clé présente et année valide (1960-2027)
+                if not month_movies and api_key and (1960 <= year <= 2027):
                     try:
                         fetched = tmdb.fetch_french_releases_for_year(year, api_key)
                         if fetched:
@@ -199,8 +199,8 @@ class CineTriageHandler(SimpleHTTPRequestHandler):
                 year = int(params.get("year", [target_dt.year])[0])
                 all_year_movies = db.get_movies_by_year(year, cinema_only=cinema_only, sort_by="date_asc", hide_reprises=hide_reprises)
 
-                # Fetch TMDb automatique si l'année est vide et clé présente
-                if not all_year_movies and api_key:
+                # Fetch TMDb automatique si l'année est vide, clé présente et année valide (1960-2027)
+                if not all_year_movies and api_key and (1960 <= year <= 2027):
                     try:
                         fetched = tmdb.fetch_french_releases_for_year(year, api_key)
                         if fetched:

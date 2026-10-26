@@ -16,6 +16,7 @@ const state = {
 
 // --- INITIALISATION ---
 document.addEventListener("DOMContentLoaded", () => {
+  populatePeriodDropdowns();
   initEventListeners();
   loadStats();
   loadGenres();
@@ -55,6 +56,7 @@ function initEventListeners() {
       btn.classList.add("active");
       state.scale = btn.getAttribute("data-scale");
       state.yearPage = 1;
+      updatePeriodControls();
       renderCurrentView();
     });
   });
@@ -66,25 +68,63 @@ function initEventListeners() {
   // 4. Bouton Aujourd'hui
   document.getElementById("btn-today").addEventListener("click", () => {
     state.targetDate = new Date();
-    updateDateInput();
+    updatePeriodControls();
     renderCurrentView();
   });
 
-  // 5. Calendrier sélecteur de date
+  // 5. Calendrier sélecteur de date (Mode Semaine uniquement)
   const dateInput = document.getElementById("nav-date-input");
-  updateDateInput();
-  dateInput.addEventListener("change", (e) => {
-    if (e.target.value) {
-      const parts = e.target.value.split("-").map(Number);
-      if (parts.length === 3 && !isNaN(parts[0])) {
-        state.targetDate = new Date(parts[0], parts[1] - 1, parts[2]);
-      } else {
-        state.targetDate = new Date(e.target.value);
+  if (dateInput) {
+    dateInput.addEventListener("change", (e) => {
+      if (e.target.value) {
+        const parts = e.target.value.split("-").map(Number);
+        // Validation stricte : année à 4 chiffres complète
+        if (parts.length === 3 && parts[0] >= 1900 && parts[0] <= 2100 && parts[1] >= 1 && parts[1] <= 12 && parts[2] >= 1 && parts[2] <= 31) {
+          const newDate = new Date(parts[0], parts[1] - 1, parts[2]);
+          if (formatDateISO(newDate) !== formatDateISO(state.targetDate)) {
+            state.targetDate = newDate;
+            renderCurrentView();
+          }
+        }
       }
-      viewCache.clear();
-      renderCurrentView();
-    }
-  });
+    });
+  }
+
+  // 5b. Menu déroulant direct Année (Mode Année - 1 clic, 0 requête intermédiaire)
+  const yearSelect = document.getElementById("nav-year-select");
+  if (yearSelect) {
+    yearSelect.addEventListener("change", (e) => {
+      const y = parseInt(e.target.value, 10);
+      if (!isNaN(y) && y >= 1900) {
+        state.targetDate = new Date(y, state.targetDate.getMonth(), 1);
+        state.yearPage = 1;
+        renderCurrentView();
+      }
+    });
+  }
+
+  // 5c. Menu déroulant direct Mois + Année (Mode Mois)
+  const monthSelect = document.getElementById("nav-month-select");
+  if (monthSelect) {
+    monthSelect.addEventListener("change", (e) => {
+      const m = parseInt(e.target.value, 10);
+      if (!isNaN(m) && m >= 0 && m <= 11) {
+        state.targetDate = new Date(state.targetDate.getFullYear(), m, 1);
+        renderCurrentView();
+      }
+    });
+  }
+
+  const monthYearSelect = document.getElementById("nav-month-year-select");
+  if (monthYearSelect) {
+    monthYearSelect.addEventListener("change", (e) => {
+      const y = parseInt(e.target.value, 10);
+      if (!isNaN(y) && y >= 1900) {
+        state.targetDate = new Date(y, state.targetDate.getMonth(), 1);
+        renderCurrentView();
+      }
+    });
+  }
 
   // 6. Pagination Année
   document.getElementById("btn-page-prev").addEventListener("click", () => {
@@ -190,9 +230,61 @@ function formatDateISO(d) {
   return `${y}-${m}-${day}`;
 }
 
-function updateDateInput() {
+function populatePeriodDropdowns() {
+  const maxYear = 2027;
+  const minYear = 1960;
+
+  const yearSelect = document.getElementById("nav-year-select");
+  const monthYearSelect = document.getElementById("nav-month-year-select");
+
+  if (yearSelect && yearSelect.options.length === 0) {
+    for (let y = maxYear; y >= minYear; y--) {
+      const opt = document.createElement("option");
+      opt.value = y;
+      opt.textContent = y;
+      yearSelect.appendChild(opt);
+    }
+  }
+
+  if (monthYearSelect && monthYearSelect.options.length === 0) {
+    for (let y = maxYear; y >= minYear; y--) {
+      const opt = document.createElement("option");
+      opt.value = y;
+      opt.textContent = y;
+      monthYearSelect.appendChild(opt);
+    }
+  }
+}
+
+function updatePeriodControls() {
+  const ctrlWeek = document.getElementById("ctrl-week-picker");
+  const ctrlMonth = document.getElementById("ctrl-month-picker");
+  const ctrlYear = document.getElementById("ctrl-year-picker");
   const dateInput = document.getElementById("nav-date-input");
-  dateInput.value = formatDateISO(state.targetDate);
+  const yearSelect = document.getElementById("nav-year-select");
+  const monthSelect = document.getElementById("nav-month-select");
+  const monthYearSelect = document.getElementById("nav-month-year-select");
+
+  if (ctrlWeek) ctrlWeek.classList.toggle("hidden", state.scale !== "week");
+  if (ctrlMonth) ctrlMonth.classList.toggle("hidden", state.scale !== "month");
+  if (ctrlYear) ctrlYear.classList.toggle("hidden", state.scale !== "year");
+
+  if (dateInput) {
+    dateInput.value = formatDateISO(state.targetDate);
+  }
+  if (yearSelect) {
+    yearSelect.value = state.targetDate.getFullYear();
+  }
+  if (monthSelect) {
+    monthSelect.value = state.targetDate.getMonth();
+  }
+  if (monthYearSelect) {
+    monthYearSelect.value = state.targetDate.getFullYear();
+  }
+}
+
+function updateDateInput() {
+  updatePeriodControls();
 }
 
 function navigatePeriod(direction) {
@@ -206,7 +298,7 @@ function navigatePeriod(direction) {
     state.yearPage = 1;
   }
   state.targetDate = d;
-  updateDateInput();
+  updatePeriodControls();
   renderCurrentView();
 }
 
@@ -249,8 +341,44 @@ async function loadGenres() {
   }
 }
 
-// --- CACHE EN MÉMOIRE & PRÉCHARGEMENT INSTANTANÉ (0 MS) ---
-const viewCache = new Map();
+// --- CACHE STRICTEMENT BORNÉ LRU (MAX 3 ENTRÉES : ACTUELLE + 2 PRÉCÉDENTES) ---
+class LimitedLRUCache {
+  constructor(maxEntries = 3) {
+    this.maxEntries = maxEntries;
+    this.cache = new Map();
+  }
+
+  get(key) {
+    if (!this.cache.has(key)) return undefined;
+    const val = this.cache.get(key);
+    this.cache.delete(key);
+    this.cache.set(key, val);
+    return val;
+  }
+
+  set(key, val) {
+    if (this.cache.has(key)) {
+      this.cache.delete(key);
+    } else if (this.cache.size >= this.maxEntries) {
+      const oldestKey = this.cache.keys().next().value;
+      this.cache.delete(oldestKey);
+    }
+    this.cache.set(key, val);
+  }
+
+  has(key) {
+    return this.cache.has(key);
+  }
+
+  clear() {
+    this.cache.clear();
+  }
+}
+
+const viewCache = new LimitedLRUCache(3);
+
+let currentFetchController = null;
+let currentRequestId = 0;
 
 function getCacheKey(scale, targetDate, page) {
   return `${scale}_${formatDateISO(targetDate)}_${page || 1}_${state.cinemaOnly}_${state.sortBy}_${state.hideReprises}`;
@@ -262,40 +390,33 @@ async function fetchViewData(scale, targetDate, page) {
     return viewCache.get(key);
   }
 
+  // Annuler toute requête précédente en cours pour éviter les collisions asynchrones
+  if (currentFetchController) {
+    currentFetchController.abort();
+  }
+  currentFetchController = new AbortController();
+  const requestId = ++currentRequestId;
+
   const dateStr = formatDateISO(targetDate);
   const year = targetDate.getFullYear();
   const month = targetDate.getMonth() + 1;
   const url = `/api/movies?scale=${scale}&date=${dateStr}&year=${year}&month=${month}&page=${page || 1}&cinema_only=${state.cinemaOnly}&sort=${state.sortBy}&hide_reprises=${state.hideReprises ? 1 : 0}`;
 
-  const res = await fetch(url);
+  const res = await fetch(url, { signal: currentFetchController.signal });
+  if (requestId !== currentRequestId) {
+    throw new Error("Aborted by newer request");
+  }
   const data = await res.json();
+  if (requestId !== currentRequestId) {
+    throw new Error("Aborted by newer request");
+  }
   viewCache.set(key, data);
   return data;
 }
 
-// Préchargement en arrière-plan des périodes précédente et suivante
-function prefetchNeighbors() {
-  if (state.scale === "week") {
-    const dPrev = new Date(state.targetDate);
-    dPrev.setDate(dPrev.getDate() - 7);
-    fetchViewData("week", dPrev, 1).catch(() => {});
-
-    const dNext = new Date(state.targetDate);
-    dNext.setDate(dNext.getDate() + 7);
-    fetchViewData("week", dNext, 1).catch(() => {});
-  } else if (state.scale === "month") {
-    const dPrev = new Date(state.targetDate);
-    dPrev.setMonth(dPrev.getMonth() - 1);
-    fetchViewData("month", dPrev, 1).catch(() => {});
-
-    const dNext = new Date(state.targetDate);
-    dNext.setMonth(dNext.getMonth() + 1);
-    fetchViewData("month", dNext, 1).catch(() => {});
-  }
-}
-
 // --- RENDU PRINCIPAL DU TRIAGE ---
 async function renderCurrentView() {
+  updatePeriodControls();
   const container = document.getElementById("movies-container");
   const periodTitle = document.getElementById("period-title");
   const countBar = document.getElementById("period-movie-count");
@@ -305,7 +426,7 @@ async function renderCurrentView() {
 
   // Si pas encore en cache, afficher un message d'attente bref
   if (!viewCache.has(key)) {
-    container.innerHTML = '<div style="text-align:center; padding: 40px; color: #64748b;">Chargement instantané...</div>';
+    container.innerHTML = '<div style="text-align:center; padding: 40px; color: #64748b;">Chargement en cours...</div>';
   }
 
   try {
@@ -323,11 +444,10 @@ async function renderCurrentView() {
       yearPag.classList.add("hidden");
       renderYearView(data, container, countBar);
     }
-
-    // Précharger immédiatement les semaines/mois voisins en arrière-plan
-    prefetchNeighbors();
-
   } catch (e) {
+    if (e.name === "AbortError" || (e.message && e.message.includes("Aborted"))) {
+      return; // Requête annulée au profit d'une plus récente, ignorer silencieusement
+    }
     container.innerHTML = `<div style="color: #ef4444; padding: 20px;">Erreur de chargement : ${e.message}</div>`;
   }
 }
