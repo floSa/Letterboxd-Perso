@@ -9,6 +9,10 @@
 
 ---
 
+![Aperçu de Movie Database](docs/assets/demo.gif)
+
+---
+
 ## Architecture
 
 Movie Database fonctionne selon une architecture légère client-serveur en local. Le backend Python (`server.py`) expose une API REST ultra-rapide connectée à une base de données relationnelle locale SQLite (`cinetrack.db`) couvrant l'ensemble des sorties cinéma françaises de 1960 à 2026 (44 758 films répertoriés). Le frontend est une application à page unique (Single Page Application) en Vanilla JavaScript et CSS, garantissant un affichage réactif à zéro latence avec navigation par période optimisée (sélecteurs directs sans étapes intermédiaires) et cache mémoire LRU strictement borné (3 entrées maximum).
