@@ -114,12 +114,14 @@ class CineTriageHandler(SimpleHTTPRequestHandler):
                 movies = db.get_movies_by_week(wed_str, include_dismissed=False, cinema_only=cinema_only, sort_by=sort_by, hide_reprises=hide_reprises)
 
                 # Fetch TMDb automatique si vide et clé présente
-                if not movies and api_key and not cinema_only:
-                    fetched = tmdb.fetch_movies_for_date_range(wed_str, tue_str, api_key)
-                    if fetched:
-                        for f_m in fetched:
-                            db.insert_or_update_movie(f_m)
-                        movies = db.get_movies_by_week(wed_str, include_dismissed=False, cinema_only=cinema_only, sort_by=sort_by, hide_reprises=hide_reprises)
+                if not movies and api_key:
+                    try:
+                        fetched = tmdb.fetch_movies_for_date_range(wed_str, tue_str, api_key)
+                        if fetched:
+                            db.insert_or_update_movies_batch(fetched)
+                            movies = db.get_movies_by_week(wed_str, include_dismissed=False, cinema_only=cinema_only, sort_by=sort_by, hide_reprises=hide_reprises)
+                    except Exception:
+                        pass
 
                 # Enrichissement casting, réalisateur et reprise en arrière-plan (non-bloquant)
                 if api_key and movies:
@@ -145,6 +147,16 @@ class CineTriageHandler(SimpleHTTPRequestHandler):
                 year = int(params.get("year", [target_dt.year])[0])
                 month = int(params.get("month", [target_dt.month])[0])
                 month_movies = db.get_movies_by_month(year, month, cinema_only=cinema_only, sort_by=sort_by, hide_reprises=hide_reprises)
+
+                # Fetch TMDb automatique si le mois est vide et clé présente
+                if not month_movies and api_key:
+                    try:
+                        fetched = tmdb.fetch_french_releases_for_year(year, api_key)
+                        if fetched:
+                            db.insert_or_update_movies_batch(fetched)
+                            month_movies = db.get_movies_by_month(year, month, cinema_only=cinema_only, sort_by=sort_by, hide_reprises=hide_reprises)
+                    except Exception:
+                        pass
 
                 # Grouper par semaine de sortie (mercredi)
                 weeks_map = {}
@@ -186,6 +198,16 @@ class CineTriageHandler(SimpleHTTPRequestHandler):
             elif scale == "year":
                 year = int(params.get("year", [target_dt.year])[0])
                 all_year_movies = db.get_movies_by_year(year, cinema_only=cinema_only, sort_by="date_asc", hide_reprises=hide_reprises)
+
+                # Fetch TMDb automatique si l'année est vide et clé présente
+                if not all_year_movies and api_key:
+                    try:
+                        fetched = tmdb.fetch_french_releases_for_year(year, api_key)
+                        if fetched:
+                            db.insert_or_update_movies_batch(fetched)
+                            all_year_movies = db.get_movies_by_year(year, cinema_only=cinema_only, sort_by="date_asc", hide_reprises=hide_reprises)
+                    except Exception:
+                        pass
 
                 month_names = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
                 months_list = []

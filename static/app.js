@@ -75,7 +75,13 @@ function initEventListeners() {
   updateDateInput();
   dateInput.addEventListener("change", (e) => {
     if (e.target.value) {
-      state.targetDate = new Date(e.target.value);
+      const parts = e.target.value.split("-").map(Number);
+      if (parts.length === 3 && !isNaN(parts[0])) {
+        state.targetDate = new Date(parts[0], parts[1] - 1, parts[2]);
+      } else {
+        state.targetDate = new Date(e.target.value);
+      }
+      viewCache.clear();
       renderCurrentView();
     }
   });
