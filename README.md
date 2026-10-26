@@ -103,6 +103,43 @@ python server.py
 
 ---
 
+## Gestion des affiches (Cache local & Hors-ligne)
+
+Par défaut, l'application est prête à l'emploi et affiche les affiches de films en ligne via le CDN officiel The Movie Database (`https://image.tmdb.org/t/p/w342/...`).
+
+Pour utiliser l'application **100 % hors-ligne** sans aucune dépendance à Internet, deux méthodes sont disponibles pour intégrer les affiches HD (`w342`) dans le dossier local `static/posters/` :
+
+### Méthode 1 : Téléchargement automatique via l'API The Movie Database
+Le script `download_posters.py` télécharge et classe automatiquement les affiches dans `static/posters/` avec gestion multi-threadée et reprise sur interruption :
+```bash
+# Télécharger toutes les affiches de la base (1960 à 2026)
+python download_posters.py --all
+
+# Télécharger uniquement les années récentes (2024 à 2026)
+python download_posters.py --recent
+
+# Télécharger une année précise (ex: 2026 ou 1965)
+python download_posters.py 2026
+```
+
+### Méthode 2 : Utilisation de l'archive hors-ligne (posters_offline.zip)
+Si vous disposez de l'archive `posters_offline.zip` (~1,25 Go contenant l'ensemble des ~28 000 affiches) :
+1. Placez le fichier `posters_offline.zip` directement à la racine du projet `Letterboxd-Perso/`.
+2. Décompressez automatiquement l'archive vers le dossier `static/posters/` :
+```bash
+python archive_posters.py --unzip
+```
+*(Méthode alternative manuelle : vous pouvez également extraire directement le contenu du fichier zip dans le dossier `static/posters/`).*
+
+Pour compacter ou archiver à tout moment le dossier `static/posters/` afin de libérer de l'espace ou le transférer :
+```bash
+python archive_posters.py --zip
+```
+
+Dès que les fichiers images sont présents dans `static/posters/`, le serveur les sert en priorité locale avec zéro latence.
+
+---
+
 ## Configuration
 
 | Paramètre | Fichier | Valeur par défaut | Rôle |
@@ -150,8 +187,11 @@ Letterboxd-Perso/
 ├── server.py                  # Serveur HTTP standard et routeur d'API REST
 ├── database.py                # Modele SQLite, indexation et regles anti-bruit
 ├── tmdb_client.py             # Client de decouverte et metadonnees TMDb
+├── download_posters.py        # Telechargement local des affiches TMDb (mode hors-ligne)
+├── archive_posters.py         # Compression et decompression de posters_offline.zip
 ├── obsidian_export.py         # Generateur de notes Markdown avec YAML frontmatter
 ├── cinetrack.db               # Base de donnees locale relationnelle SQLite
+├── posters_offline.zip        # Archive locale compressees des affiches w342 (ignoree par Git)
 ├── config.example.json        # Modele de configuration sans secrets
 ├── config.json                # Configuration locale avec cle API (ignore par Git)
 ├── requirements.txt           # Dependances Python minimales (requests)

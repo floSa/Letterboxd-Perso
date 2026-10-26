@@ -47,6 +47,8 @@ flowchart LR
 | Couche base de données | `database.py` | Schéma relationnel SQLite, requêtes filtrées, pagination, indexation et bascules d'état |
 | Synchronisation TMDb | `tmdb_client.py` | Ingestion des sorties hebdomadaires en France, récupération des crédits et métadonnées |
 | Exportateur Markdown | `obsidian_export.py` | Transformation des fiches de films en notes Markdown enrichies pour coffres Obsidian |
+| Téléchargement d'affiches | `download_posters.py` | Téléchargement local multi-threadé des affiches HD (w342) depuis l'API TMDb |
+| Gestionnaire d'archive | `archive_posters.py` | Compression et décompression du pack d'affiches `posters_offline.zip` vers `static/posters/` |
 | Client d'affichage SPA | `static/index.html` | Squelette sémantique des 3 vues majeures (Sorties, Sélection, Vus) et des panneaux de filtres |
 | Système de styles | `static/style.css` | Thème sombre, disposition réactive, composants vectoriels et conteneurs fixes (`sticky`) |
 | Contrôleur d'interface | `static/app.js` | Gestion d'état local, sélecteurs directs de période (Semaine, Mois, Année), cache mémoire LRU borné à 3 entrées, annulation des requêtes en vol via AbortController et widgets de notation |
@@ -140,6 +142,14 @@ Index d'optimisation :
 - `idx_movies_watched` sur `is_watched`
 - `idx_movies_reprise` sur `is_reprise`
 - `idx_movies_owned` sur `is_owned`
+
+### Gestion hybride du stockage des affiches
+1. **Accès en ligne transparent** : Les chemins d'affiches sont stockés par défaut sous forme d'URLs absolues The Movie Database (`https://image.tmdb.org/t/p/w342/...`). L'application fonctionne sans aucun fichier image local préalable.
+2. **Cache local hors-ligne (`static/posters/`)** :
+   - Le serveur local résout prioritairement les affiches présentes dans `static/posters/` sous la route `/posters/{filename}`.
+   - Deux méthodes d'alimentation locale :
+     - *Ingestion par API* : `python download_posters.py --all` (ou par tranches d'années).
+     - *Archive compressée* : `python archive_posters.py --unzip` depuis le fichier `posters_offline.zip` placé à la racine du projet. L'archive et le dossier `static/posters/` sont exclus du suivi Git pour respecter la limite de poids des dépôts.
 
 ---
 

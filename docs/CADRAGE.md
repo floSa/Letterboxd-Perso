@@ -18,7 +18,8 @@ Letterboxd-Perso est une application web personnelle de tri, de notation et d'ar
 - Filtrage anti-bruit ciblé : exclusion des courts-métrages (< 50 minutes), des entrées techniques TMDb factices et des séances uniques non commerciales.
 - Traitement spécifique des ressorties et reprises en salle (isolement en bas de liste et bascule masquer/afficher).
 - Marquage d'état en base : films rejetés (`status = 'dismissed'`), conservés (`status = 'kept'`), vus (`is_watched = 1`), possédés (`is_owned = 1`).
-- Navigation réactive avec cache client et requêtes préchargées.
+- Navigation réactive avec cache client LRU (3 entrées max) et sélecteurs de période directs.
+- Mode hybride pour les affiches de films : affichage en ligne via CDN TMDb par défaut ou fonctionnement 100 % hors-ligne via téléchargement batch (`download_posters.py`) ou extraction de pack zippé (`posters_offline.zip` vers `static/posters/`).
 - Exportation Markdown riche (frontmatter YAML, affiches, index Dataview) vers un dossier Obsidian local.
 - Entêtes et filtres fixes au défilement (`sticky`) pour un confort de navigation continu.
 
