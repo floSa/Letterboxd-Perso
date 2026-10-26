@@ -49,7 +49,7 @@ flowchart LR
 | Exportateur Markdown | `obsidian_export.py` | Transformation des fiches de films en notes Markdown enrichies pour coffres Obsidian |
 | Client d'affichage SPA | `static/index.html` | Squelette sémantique des 3 vues majeures (Sorties, Sélection, Vus) et des panneaux de filtres |
 | Système de styles | `static/style.css` | Thème sombre, disposition réactive, composants vectoriels et conteneurs fixes (`sticky`) |
-| Contrôleur d'interface | `static/app.js` | Gestion d'état local, cache de navigation, requêtes asynchrones et widgets de notation |
+| Contrôleur d'interface | `static/app.js` | Gestion d'état local, sélecteurs directs de période (Semaine, Mois, Année), cache mémoire LRU borné à 3 entrées, annulation des requêtes en vol via AbortController et widgets de notation |
 | Base de données | `cinetrack.db` | Fichier de base de données relationnelle SQLite contenant l'ensemble des films et des évaluations |
 | Configuration | `config.json` | Fichier local contenant la clé d'authentification TMDb et les chemins système |
 
@@ -71,7 +71,7 @@ flowchart LR
 
 ### Navigation et consultation d'une période
 1. L'utilisateur sélectionne une semaine, un mois ou une année sur l'interface.
-2. Le script client `app.js` interroge le cache local mémoire (`viewCache`).
+2. Le script client `app.js` interroge le cache local mémoire LRU (`viewCache`, borné strictement à 3 entrées).
 3. En cas de manque, une requête HTTP `GET /api/movies?week_date=...` est émise vers `server.py`.
 4. Le serveur sollicite `database.py`, qui exécute une requête SQL indexée avec tri des reprises et filtres de rejet.
 5. Les données JSON sont retournées en quelques millisecondes et injectées dans le DOM par fragments sans rechargement.

@@ -34,7 +34,7 @@ Letterboxd-Perso est une application web personnelle de tri, de notation et d'ar
 | Contrainte | Détail |
 |---|---|
 | Déploiement | Local strict (`localhost:8080`), mono-machine ou synchronisation par Git |
-| Données | Stockage SQLite autonome dans le dépôt (`cinetrack.db`), volume modeste (~5,2 Mo) |
+| Données | Stockage SQLite autonome dans le dépôt (`cinetrack.db`), volume maîtrisé (~31 Mo pour 44 758 films de 1960 à 2026) |
 | Latence | Réponse inférieure à 10 ms sur toutes les requêtes locales via indexation SQLite et Single Page Application Vanilla JS |
 | Dépendances | Minimales : Python standard library + bibliothèque `requests`, aucun framework lourd (pas de Node.js en production, pas de buildpack complexe) |
 | Compatibilité | Windows (lanceur batch fourni), Linux et macOS |
