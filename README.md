@@ -11,6 +11,8 @@
 
 ![Aperçu de Movie Database](docs/assets/demo.gif)
 
+*Démonstration de l'interface en octobre 2026 : navigation temporelle (Semaine, Mois, Année), notation fine (étoiles et cœurs), suivi de possession et carrousels horizontaux.*
+
 ---
 
 ## Architecture
